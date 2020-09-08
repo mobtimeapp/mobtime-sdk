@@ -5,10 +5,14 @@
   "repository": "git@github.com:mrozbarry/mobtime-sdk.git",
   "author": "Alex Barry <alex.barry@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "start": "node -r esm src/mobtime-cli.js"
+  },
   "devDependencies": {
     "ava": "^3.12.1"
   },
   "dependencies": {
-    "esm": "^3.2.25"
+    "esm": "^3.2.25",
+    "ws": "^7.3.1"
   }
 }
