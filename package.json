@@ -4,5 +4,11 @@
   "main": "index.js",
   "repository": "git@github.com:mrozbarry/mobtime-sdk.git",
   "author": "Alex Barry <alex.barry@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "ava": "^3.12.1"
+  },
+  "dependencies": {
+    "esm": "^3.2.25"
+  }
 }
