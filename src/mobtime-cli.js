@@ -1,48 +1,32 @@
-import process from 'process';
-import WebSocket from 'ws';
+import process from "process";
+import Mobtime from "./mobtime-sdk";
+import getopts from "getopts";
 
-console.log('mobtime-sdk', process.argv);
-
-const timerId = process.argv[process.argv.length - 1];
-
-class Mobtime {
-  constructor(mobtimeUrl) {
-    const socket = new WebSocket(mobtimeUrl);
-
-    this.callbacks = {
-      'timer:ownership': [],
-      'mob:update': [],
-      'goals:update': [],
-      'settings:update': [],
-    };
-
-    socket.on('open', () => {
-      console.log(`Connected to ${mobtimeUrl}`);
-      socket.send(JSON.stringify({type:'client:new'}));
-    });
-
-    socket.on('message', (data) => {
-      const message = JSON.parse(data);
-      console.log('> ', message);
-      for(const callback of (this.callbacks[message.type] || [])) {
-        callback();
-      }
-    });
+const args = getopts(process.argv.slice(2), {
+  alias: {
+    help: "h"
+  },
+  default: {
+    domain: "mobti.me",
+    timerId: null,
+    mob: "",
+    goals: "",
+    timerDuration: ""
   }
-  
-  addEventListener(type, callback){
-    if (!(type in this.callbacks)) {
-      return false;
-    }
+});
 
-    this.callbacks[type].push(callback);
+const timerId = args._[0];
+const action = args._[1];
 
-    return true;
-  }
+console.log("mobtime-sdk");
 
-}
+const timer = new Mobtime(`wss://${args.domain}/${timerId}`);
 
-const timer = new Mobtime(`wss://dev.mobti.me/${timerId}`);
-timer.addEventListener('timer:ownership', () => {
-  console.log('!!!!!! someone set the ownership !!!!!!');
+timer.connect().then(() => {
+  console.log("Connected to timer");
+});
+timer.isNewTimer().then(isNew => {
+  if (!isNew) return;
+  console.log("Timer is new");
+  console.log(`Get your timer here: https://${args.domain}/${timerId}`);
 });
