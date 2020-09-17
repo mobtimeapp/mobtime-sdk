@@ -11,11 +11,17 @@
   "devDependencies": {
     "ava": "^3.12.1",
     "eslint": "^7.8.1",
-    "prettier-eslint-cli": "^5.0.0"
+    "prettier-eslint-cli": "^5.0.0",
+    "sinon": "^9.0.3"
   },
   "dependencies": {
     "esm": "^3.2.25",
     "getopts": "^2.2.5",
     "ws": "^7.3.1"
+  },
+  "ava": {
+    "require": [
+      "esm"
+    ]
   }
 }

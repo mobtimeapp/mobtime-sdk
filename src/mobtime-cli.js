@@ -18,15 +18,22 @@ const args = getopts(process.argv.slice(2), {
 const timerId = args._[0];
 const action = args._[1];
 
-console.log("mobtime-sdk");
+console.log("mobtime-sdk", { timerId, action });
 
 const timer = new Mobtime(`wss://${args.domain}/${timerId}`);
 
-timer.connect().then(() => {
-  console.log("Connected to timer");
+timer.addMessageListener("*", event => {
+  console.log("[TIMER]", event);
 });
-timer.isNewTimer().then(isNew => {
-  if (!isNew) return;
-  console.log("Timer is new");
-  console.log(`Get your timer here: https://${args.domain}/${timerId}`);
-});
+
+timer
+  .connect()
+  .then(() => {
+    console.log("Connected to timer");
+  })
+  .then(() => timer.isNewTimer())
+  .then(isNew => {
+    console.log("Timer is new?", isNew);
+    console.log(`Get your timer here: https://${args.domain}/${timerId}`);
+  })
+  .then(() => timer.disconnect());

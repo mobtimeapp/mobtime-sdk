@@ -11,6 +11,7 @@ class Mobtime {
   constructor(mobtimeUrl) {
     this.mobtimeUrl = mobtimeUrl;
     this.socket = null;
+    this.WebSocket = WebSocket;
 
     this._resetCache();
     this._resetCallbacks();
@@ -20,6 +21,10 @@ class Mobtime {
     this._isNewTimerPromise = new Promise(resolve => {
       this._isNewTimerResolve = resolve;
     });
+  }
+
+  _setMockWebSocketClass(websocketClass) {
+    this.WebSocket = websocketClass;
   }
 
   _resetCallbacks() {
@@ -42,17 +47,13 @@ class Mobtime {
 
   connect() {
     return new Promise((resolve, reject) => {
-      const socket = new WebSocket(this.mobtimeUrl);
+      this.socket = new this.WebSocket(this.mobtimeUrl);
 
-      socket.on("open", () => {
-        socket.send(JSON.stringify({ type: "client:new" }));
-        this._isNewTimerHandle = setTimeout(() => {
-          console.log("isNewTimer timeout");
-          this._setIsNewTimer(true);
-        }, 500);
-        this.socket = socket;
+      this.socket.on("open", () => {
+        this.socket.send(JSON.stringify({ type: "client:new" }));
+        this.asynchronouslyDetermineIfTimerIsNew();
 
-        socket.on("message", data => {
+        this.socket.on("message", data => {
           const message = JSON.parse(data);
           this._cacheHandler(message);
           const timer = JSON.parse(JSON.stringify(this.cache));
@@ -64,11 +65,17 @@ class Mobtime {
         resolve();
       });
 
-      socket.on("error", err => {
+      this.socket.on("error", err => {
         if (this.socket) return;
         reject(err);
       });
     });
+  }
+
+  asynchronouslyDetermineIfTimerIsNew() {
+    this._isNewTimerHandle = setTimeout(() => {
+      this._setIsNewTimer(true);
+    }, 500);
   }
 
   _setIsNewTimer(value) {
@@ -85,7 +92,7 @@ class Mobtime {
 
   disconnect() {
     if (this.socket) {
-      this.socket.disconnect();
+      this.socket.close();
     }
     this._resetCallbacks();
     this._resetCache();
@@ -95,6 +102,13 @@ class Mobtime {
     const { type, ...cache } = message;
     switch (type) {
       case MESSAGE_TYPES.TIMER_OWNERSHIP:
+        this._setIsNewTimer(cache.isOwner);
+        this.cache = {
+          ...this.cache,
+          ...cache
+        };
+        return;
+
       case MESSAGE_TYPES.SETTINGS_UPDATE:
       case MESSAGE_TYPES.GOALS_UPDATE:
       case MESSAGE_TYPES.MOB_UPDATE:
@@ -111,6 +125,11 @@ class Mobtime {
   }
 
   addMessageListener(type, callback) {
+    if (type === "*") {
+      return Object.values(MESSAGE_TYPES).map(messageType => {
+        return this.addMessageListener(messageType, callback);
+      });
+    }
     if (!(type in this.callbacks)) {
       return false;
     }
