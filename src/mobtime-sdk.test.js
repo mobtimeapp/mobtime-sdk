@@ -48,3 +48,15 @@ test("it detects the timer is not new", async t => {
     .then(v => t.is(v, false))
     .catch(t.fail);
 });
+
+test.skip("it can insert a new member into an existing mob", async t => {
+  const timer = new Mobtime("wss://localhost/test");
+  timer._setMockWebSocketClass(MockWebSocket);
+
+  const connectionPromise = timer.connect();
+  timer.socket.emit("open");
+
+  await connectionPromise;
+
+  timer.addMember(name);
+});

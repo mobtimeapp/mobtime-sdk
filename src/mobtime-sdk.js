@@ -148,6 +148,12 @@ class Mobtime {
 
     return true;
   }
+
+  addMember(name) {
+    const { mob } = this.cache;
+    mob.push(name);
+    this.socket.send(JSON.stringify({ type: MESSAGE_TYPES.MOB_UPDATE, mob }));
+  }
 }
 
 export default Mobtime;
