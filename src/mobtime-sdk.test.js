@@ -5,19 +5,19 @@ import { MockWebSocket } from "./testServer";
 
 test("it connects to a timer", t => {
   const timer = new Mobtime("wss://localhost/test");
-  timer._setMockWebSocketClass(MockWebSocket);
+  timer.testSetWebSocketClass(MockWebSocket);
 
   const connectionPromise = timer.connect();
-  timer.socket.emit("open");
+  timer.$onSocketOpen();
   return connectionPromise.then(t.pass).catch(t.fail);
 });
 
 test("it detects the timer is new", async t => {
   const timer = new Mobtime("wss://localhost/test");
-  timer._setMockWebSocketClass(MockWebSocket);
+  timer.testSetWebSocketClass(MockWebSocket);
 
   const connectionPromise = timer.connect();
-  timer.socket.emit("open");
+  timer.$onSocketOpen();
   await connectionPromise;
 
   return timer
@@ -28,19 +28,18 @@ test("it detects the timer is new", async t => {
 
 test("it detects the timer is not new", async t => {
   const timer = new Mobtime("wss://localhost/test");
-  timer._setMockWebSocketClass(MockWebSocket);
+  timer.testSetWebSocketClass(MockWebSocket);
 
   const connectionPromise = timer.connect();
-  timer.socket.emit("open");
+  timer.$onSocketOpen();
 
   await connectionPromise;
 
-  timer.socket.emit(
-    "message",
+  timer.$onSocketMessage(
     JSON.stringify({
       type: MESSAGE_TYPES.TIMER_OWNERSHIP,
-      isOwner: false
-    })
+      isOwner: false,
+    }),
   );
 
   return timer

@@ -1,159 +1,234 @@
 import WebSocket from "ws";
 
 const MESSAGE_TYPES = {
+  CLIENT_NEW: "client:new",
   TIMER_OWNERSHIP: "timer:ownership",
   MOB_UPDATE: "mob:update",
   GOALS_UPDATE: "goals:update",
-  SETTINGS_UPDATE: "settings:update"
+  SETTINGS_UPDATE: "settings:update",
 };
 
-class Mobtime {
-  constructor(mobtimeUrl) {
-    this.mobtimeUrl = mobtimeUrl;
-    this.socket = null;
-    this.WebSocket = WebSocket;
+const deferredPromise = () => {
+  let resolveFn = () => {};
+  let rejectFn = () => {};
+  const promise = new Promise((_resolve, _reject) => {
+    resolveFn = _resolve;
+    rejectFn = _reject;
+  });
 
-    this._resetCache();
-    this._resetCallbacks();
+  return {
+    promise,
+    resolve: value => resolveFn(value),
+    reject: err => rejectFn(err),
+  };
+};
 
-    this._isNewTimerResolve = () => {};
-    this._isNewTimerHandle = null;
-    this._isNewTimerPromise = new Promise(resolve => {
-      this._isNewTimerResolve = resolve;
-    });
-  }
+function Mobtime(timerId, options = {}) {
+  let _WebSocket = WebSocket;
+  let _socket = null;
+  let _isNewTimerHandle = null;
+  let _isNewTimer = deferredPromise();
+  let _socketConnect = deferredPromise();
 
-  _setMockWebSocketClass(websocketClass) {
-    this.WebSocket = websocketClass;
-  }
+  let callbacks = {};
+  let state = {};
 
-  _resetCallbacks() {
-    this.callbacks = {
+  const _resetState = () => {
+    state = {
+      timer: { startedAt: null, duration: 5 * 60 * 1000, accumulator: 0 },
+      goals: [],
+      mob: [],
+      settings: { mobOrder: "Navigator,Driver", duration: 5 * 60 * 1000 },
+      isOwner: false,
+    };
+  };
+
+  const _setState = nextState => {
+    state = { ...state, ...nextState };
+  };
+
+  const _resetCallbacks = () => {
+    callbacks = {
       [MESSAGE_TYPES.TIMER_OWNERSHIP]: [],
       [MESSAGE_TYPES.MOB_UPDATE]: [],
       [MESSAGE_TYPES.GOALS_UPDATE]: [],
-      [MESSAGE_TYPES.SETTINGS_UPDATE]: []
+      [MESSAGE_TYPES.SETTINGS_UPDATE]: [],
     };
-  }
+  };
 
-  _resetCache() {
-    this.cache = {
-      goals: [],
-      mob: [],
-      settings: {},
-      isOwner: false
-    };
-  }
-
-  connect() {
-    return new Promise((resolve, reject) => {
-      this.socket = new this.WebSocket(this.mobtimeUrl);
-
-      this.socket.on("open", () => {
-        this.socket.send(JSON.stringify({ type: "client:new" }));
-        this.asynchronouslyDetermineIfTimerIsNew();
-
-        this.socket.on("message", data => {
-          const message = JSON.parse(data);
-          this._cacheHandler(message);
-          const timer = JSON.parse(JSON.stringify(this.cache));
-          for (const callback of this.callbacks[message.type] || []) {
-            callback(message, timer);
-          }
-        });
-
-        resolve();
+  const addMessageListener = (type, callback) => {
+    if (type === "*") {
+      return Object.values(MESSAGE_TYPES).map(messageType => {
+        return addMessageListener(messageType, callback);
       });
-
-      this.socket.on("error", err => {
-        if (this.socket) return;
-        reject(err);
-      });
-    });
-  }
-
-  asynchronouslyDetermineIfTimerIsNew() {
-    this._isNewTimerHandle = setTimeout(() => {
-      this._setIsNewTimer(true);
-    }, 500);
-  }
-
-  _setIsNewTimer(value) {
-    if (this._isNewTimerHandle === null) return;
-
-    clearTimeout(this._isNewTimerHandle);
-    this._isNewTimerHandle = null;
-    this._isNewTimerResolve(value);
-  }
-
-  isNewTimer() {
-    return this._isNewTimerPromise;
-  }
-
-  disconnect() {
-    if (this.socket) {
-      this.socket.close();
     }
-    this._resetCallbacks();
-    this._resetCache();
-  }
+    if (!(type in callbacks)) {
+      return false;
+    }
 
-  _cacheHandler(message) {
-    const { type, ...cache } = message;
+    callbacks[type].push(callback);
+
+    return [type, callback];
+  };
+
+  const removeMessageListener = (type, callback) => {
+    if (Array.isArray(type)) {
+      return removeMessageListener(...type);
+    }
+    if (!(type in callbacks)) return false;
+
+    const index = callbacks[type].findIndex(fn => fn === callback);
+
+    callbacks[type].splice(index, 1);
+
+    return true;
+  };
+
+  const _init = () => {
+    _socket = null;
+
+    _resetState();
+    _resetCallbacks();
+  };
+
+  const testSetWebSocketClass = WebSocketClass => {
+    _WebSocket = WebSocketClass;
+  };
+
+  const getUrl = protocol => {
+    return `${protocol}${options.secure ? "s" : ""}://${
+      options.domain
+    }/${timerId}`;
+  };
+
+  const _setIsNewTimer = value => {
+    if (_isNewTimerHandle === null) {
+      return;
+    }
+
+    clearTimeout(_isNewTimerHandle);
+    _isNewTimerHandle = null;
+    _isNewTimer.resolve(value);
+  };
+
+  const _asynchronouslyDetermineIfTimerIsNew = () => {
+    _isNewTimerHandle = setTimeout(() => {
+      _setIsNewTimer(true);
+    }, 500);
+  };
+
+  const _socketOnOpen = () => {
+    _socket.send(JSON.stringify({ type: MESSAGE_TYPES.CLIENT_NEW }));
+    _asynchronouslyDetermineIfTimerIsNew();
+    _socketConnect.resolve();
+  };
+
+  const _messageHandler = message => {
+    const { type, ...newState } = message;
     switch (type) {
       case MESSAGE_TYPES.TIMER_OWNERSHIP:
-        this._setIsNewTimer(cache.isOwner);
-        this.cache = {
-          ...this.cache,
-          ...cache
-        };
+        _setIsNewTimer(newState.isOwner);
+        _setState(newState);
         return;
 
       case MESSAGE_TYPES.SETTINGS_UPDATE:
       case MESSAGE_TYPES.GOALS_UPDATE:
       case MESSAGE_TYPES.MOB_UPDATE:
-        this._setIsNewTimer(false);
-        this.cache = {
-          ...this.cache,
-          ...cache
-        };
+        _setIsNewTimer(false);
+        _setState(newState);
         return;
 
       default:
         return;
     }
-  }
+  };
 
-  addMessageListener(type, callback) {
-    if (type === "*") {
-      return Object.values(MESSAGE_TYPES).map(messageType => {
-        return this.addMessageListener(messageType, callback);
-      });
+  const _socketOnMessage = data => {
+    const message = JSON.parse(data);
+    _messageHandler(message);
+    const timer = JSON.parse(JSON.stringify(state));
+    for (const callback of callbacks[message.type] || []) {
+      callback(message, timer);
     }
-    if (!(type in this.callbacks)) {
-      return false;
+  };
+
+  const _socketOnError = err => {
+    if (socket) {
+      return;
     }
+    _socketConnect.reject(err);
+  };
 
-    this.callbacks[type].push(callback);
+  const connect = () => {
+    _socketConnect = deferredPromise();
+    _isNewTimer = deferredPromise();
 
-    return [type, callback];
-  }
+    _socket = new _WebSocket(getUrl("ws"));
+    _socket.on("open", _socketOnOpen);
+    _socket.on("message", _socketOnMessage);
+    _socket.on("error", _socketOnError);
 
-  removeMessageListener(type, callback) {
-    if (Array.isArray(type)) return this.removeMessageListener(...type);
-    if (!(type in this.callbacks)) return false;
+    return _socketConnect.promise;
+  };
 
-    const index = this.callbacks[type].findIndex(callback);
-    this.callbacks[type].splice(index, 1);
+  const isNewTimer = () => _isNewTimer.promise;
 
-    return true;
-  }
+  const disconnect = () => {
+    if (socket) {
+      _socket.close();
+    }
+    _init();
+  };
 
-  addMember(name) {
-    const { mob } = this.cache;
-    mob.push(name);
-    this.socket.send(JSON.stringify({ type: MESSAGE_TYPES.MOB_UPDATE, mob }));
-  }
+  const waitForMessageType = (type, timeoutMilliseconds = 60000) => {
+    return new Promise((resolve, reject) => {
+      let timeout = null;
+      let handler = () => {};
+
+      handler = () => {
+        removeMessageListener(type, handler);
+        clearTimeout(timeout);
+
+        resolve();
+      };
+      addMessageListener(type, handler);
+
+      timeout = setTimeout(() => {
+        removeMessageListener(type, handler);
+        reject(new Error(`${type} message was not sent before timeout.`));
+      }, timeoutMilliseconds);
+    });
+  };
+
+  const send = payload => {
+    return _socket.send(JSON.stringify(payload));
+  };
+
+  _init();
+
+  return {
+    testSetWebSocketClass,
+    getUrl,
+    connect,
+    isNewTimer,
+    disconnect,
+    waitForMessageType,
+    addMessageListener,
+    removeMessageListener,
+    send,
+    $onSocketOpen: _socketOnOpen,
+    $onSocketMessage: _socketOnMessage,
+    $onSocketError: _socketOnError,
+  };
+
+  //mobUpdate(mob) {
+  //this.send({type : MESSAGE_TYPES.MOB_UPDATE, mob});
+  //this.state = {...this.state, mob};
+  //}
+
+  //mobAdd(name, id = Math.random().toString(36).slice(2)) {
+  //return this.mobUpdate([...this.state.mob, {name, id} ]);
+  //}
 }
 
 export default Mobtime;
