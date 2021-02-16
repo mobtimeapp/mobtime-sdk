@@ -1,6 +1,8 @@
 import process from "process";
-import Mobtime from "./mobtime-sdk";
 import getopts from "getopts";
+
+import Mobtime from "./mobtime-sdk";
+import * as Commands from "./commands";
 
 const args = getopts(process.argv.slice(2), {
   alias: {
@@ -8,6 +10,7 @@ const args = getopts(process.argv.slice(2), {
   },
   default: {
     domain: "mobti.me",
+    secure: true,
     timerId: null,
     mob: "",
     goals: "",
@@ -16,24 +19,26 @@ const args = getopts(process.argv.slice(2), {
 });
 
 const timerId = args._[0];
-const action = args._[1];
+const commandName = args._[1];
 
-console.log("mobtime-sdk", { timerId, action });
-
-const timer = new Mobtime(`wss://${args.domain}/${timerId}`);
-
-timer.addMessageListener("*", event => {
-  console.log("[TIMER]", event);
+const timer = new Mobtime(timerId, {
+  domain: args.domain,
+  secure: args.secure == "true"
 });
 
-timer
-  .connect()
-  .then(() => {
-    console.log("Connected to timer");
+const command = Commands[commandName] || Commands.help;
+if (!command) {
+  console.log("Command not found");
+  process.exit(1);
+}
+
+const props = { args, timer };
+
+Promise.resolve(null)
+  .then(() => command.setup(props))
+  .then(() => command.run(props))
+  .catch(err => {
+    console.error("ERROR", err);
   })
-  .then(() => timer.isNewTimer())
-  .then(isNew => {
-    console.log("Timer is new?", isNew);
-    console.log(`Get your timer here: https://${args.domain}/${timerId}`);
-  })
-  .then(() => timer.disconnect());
+  .finally(() => command.teardown(props))
+  .finally(() => process.exit(0));

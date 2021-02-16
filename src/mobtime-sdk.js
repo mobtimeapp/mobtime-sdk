@@ -1,5 +1,10 @@
 import WebSocket from "ws";
 
+const makeId = () =>
+  Math.random()
+    .toString(36)
+    .slice(2);
+
 const MESSAGE_TYPES = {
   CLIENT_NEW: "client:new",
   TIMER_OWNERSHIP: "timer:ownership",
@@ -45,6 +50,7 @@ function Mobtime(timerId, options = {}) {
 
   const _setState = nextState => {
     state = { ...state, ...nextState };
+    return state;
   };
 
   const _resetCallbacks = () => {
@@ -91,7 +97,7 @@ function Mobtime(timerId, options = {}) {
     _resetCallbacks();
   };
 
-  const testSetWebSocketClass = WebSocketClass => {
+  const _setWebSocketClass = WebSocketClass => {
     _WebSocket = WebSocketClass;
   };
 
@@ -200,14 +206,63 @@ function Mobtime(timerId, options = {}) {
     });
   };
 
-  const send = payload => {
-    return _socket.send(JSON.stringify(payload));
+  const _send = payload =>
+    new Promise(resolve => {
+      _socket.send(JSON.stringify(payload), {}, (...args) => resolve(args));
+    });
+
+  // timer: { startedAt: null, duration: 5 * 60 * 1000, accumulator: 0 },
+  // goals: [],
+  // mob: [],
+  // settings: { mobOrder: "Navigator,Driver", duration: 5 * 60 * 1000 },
+  // isOwner: false,
+
+  const mobSet = mob => {
+    const s = _setState({ mob });
+    _send({
+      type: MESSAGE_TYPES.MOB_UPDATE,
+      mob: s.mob,
+    });
+  };
+
+  const mobAdd = name => {
+    const id = makeId();
+    const { mob } = state;
+    const member = { id, name };
+    return mobSet(mob.concat(member)).then(() => member);
+  };
+
+  const mobRename = (id, name) => {
+    const { mob } = state;
+    const index = mob.findIndex(m => m.id === id);
+    if (index === -1) {
+      return Promise.reject("Unable to find id");
+    }
+    const before = mob.slice(0, index);
+    const after = mob.slice(index + 1);
+    const member = { id, name };
+
+    return mobSet(before.concat(member).concat(after)).then(() => member);
+  };
+
+  const mobRemove = id => {
+    const { mob } = state;
+    return mobSet(mob.filter(m => m.id !== id));
+  };
+
+  const mobMoveIdToIndex = (id, initialDestIndex) => {
+    const { mob } = state;
+    const srcIndex = mob.findIndex(m => m.id === id);
+    if (srcIndex === -1) {
+      return 0;
+    }
+    const nextMob = mob.reduce((nextMobMemo, member, index) => {}, []);
+    return mobSet(mob.filter(m => m.id !== id));
   };
 
   _init();
 
   return {
-    testSetWebSocketClass,
     getUrl,
     connect,
     isNewTimer,
@@ -215,19 +270,26 @@ function Mobtime(timerId, options = {}) {
     waitForMessageType,
     addMessageListener,
     removeMessageListener,
-    send,
-    $onSocketOpen: _socketOnOpen,
-    $onSocketMessage: _socketOnMessage,
-    $onSocketError: _socketOnError,
+    mobSet,
+    mobAdd,
+    mobRename,
+    mobRemove,
+    mobMoveIdToIndex,
+    testing: {
+      setWebSocketClass: _setWebSocketClass,
+      onSocketOpen: _socketOnOpen,
+      onSocketMessage: _socketOnMessage,
+      onSocketError: _socketOnError,
+    },
   };
 
-  //mobUpdate(mob) {
-  //this.send({type : MESSAGE_TYPES.MOB_UPDATE, mob});
-  //this.state = {...this.state, mob};
+  // mobUpdate(mob) {
+  // this.send({type : MESSAGE_TYPES.MOB_UPDATE, mob});
+  // this.state = {...this.state, mob};
   //}
 
-  //mobAdd(name, id = Math.random().toString(36).slice(2)) {
-  //return this.mobUpdate([...this.state.mob, {name, id} ]);
+  // mobAdd(name, id = Math.random().toString(36).slice(2)) {
+  // return this.mobUpdate([...this.state.mob, {name, id} ]);
   //}
 }
 

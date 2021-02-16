@@ -6,7 +6,8 @@
   "author": "Alex Barry <alex.barry@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "node -r esm src/mobtime-cli.js"
+    "start": "node -r esm src/mobtime-cli.js",
+    "test": "ava"
   },
   "devDependencies": {
     "ava": "^3.12.1",
@@ -23,5 +24,11 @@
     "require": [
       "esm"
     ]
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "tabWidth": 2,
+    "semi": true,
+    "singlQuote": true
   }
 }

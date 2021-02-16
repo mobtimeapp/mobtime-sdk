@@ -5,19 +5,19 @@ import { MockWebSocket } from "./testServer";
 
 test("it connects to a timer", t => {
   const timer = new Mobtime("wss://localhost/test");
-  timer.testSetWebSocketClass(MockWebSocket);
+  timer.testing.setWebSocketClass(MockWebSocket);
 
   const connectionPromise = timer.connect();
-  timer.$onSocketOpen();
+  timer.testing.onSocketOpen();
   return connectionPromise.then(t.pass).catch(t.fail);
 });
 
 test("it detects the timer is new", async t => {
   const timer = new Mobtime("wss://localhost/test");
-  timer.testSetWebSocketClass(MockWebSocket);
+  timer.testing.setWebSocketClass(MockWebSocket);
 
   const connectionPromise = timer.connect();
-  timer.$onSocketOpen();
+  timer.testing.onSocketOpen();
   await connectionPromise;
 
   return timer
@@ -28,14 +28,14 @@ test("it detects the timer is new", async t => {
 
 test("it detects the timer is not new", async t => {
   const timer = new Mobtime("wss://localhost/test");
-  timer.testSetWebSocketClass(MockWebSocket);
+  timer.testing.setWebSocketClass(MockWebSocket);
 
   const connectionPromise = timer.connect();
-  timer.$onSocketOpen();
+  timer.testing.onSocketOpen();
 
   await connectionPromise;
 
-  timer.$onSocketMessage(
+  timer.testing.onSocketMessage(
     JSON.stringify({
       type: MESSAGE_TYPES.TIMER_OWNERSHIP,
       isOwner: false,
@@ -50,11 +50,10 @@ test("it detects the timer is not new", async t => {
 
 test.skip("it can insert a new member into an existing mob", async t => {
   const timer = new Mobtime("wss://localhost/test");
-  timer._setMockWebSocketClass(MockWebSocket);
+  timer.testing.setWebSocketClass(MockWebSocket);
 
   const connectionPromise = timer.connect();
-  timer.socket.emit("open");
-
+  timer.testing.onSocketOpen();
   await connectionPromise;
 
   timer.addMember(name);

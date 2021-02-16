@@ -29,7 +29,7 @@ A commandline interface and SDK for [mobtime](https://mobti.me).
    - [x] Mob changes
    - [x] Goals changes
    - [x] Setting Changes
-   - [ ] New client connects `client:new`
+   - [x] New client connects `client:new`
    - [ ] Timer starts `timer:start`
    - [ ] Timer pauses `timer:pause`
    - [ ] Timer completes `timer:complete`
