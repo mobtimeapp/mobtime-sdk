@@ -145,7 +145,8 @@ function Mobtime(timerId, options = {}) {
   };
 
   const _socketOnError = err => {
-    if (socket) {
+    console.warn(err);
+    if (_socket) {
       return;
     }
     _socketConnect.reject(err);
@@ -155,7 +156,7 @@ function Mobtime(timerId, options = {}) {
     _socketConnect = new Later();
     _isNewTimer = new Later();
 
-    _socket = new _WebSocket(getUrl("ws"));
+    _socket = new _WebSocket(getUrl("wss"));
     _socket.on("open", _socketOnOpen);
     _socket.on("message", _socketOnMessage);
     _socket.on("error", _socketOnError);
@@ -166,7 +167,7 @@ function Mobtime(timerId, options = {}) {
   const isNewTimer = () => _isNewTimer.promise;
 
   const disconnect = () => {
-    if (socket) {
+    if (_socket) {
       _socket.close();
     }
     _init();
@@ -205,7 +206,7 @@ function Mobtime(timerId, options = {}) {
 
   const mobSet = mob => {
     const s = _setState({ mob });
-    _send({
+    return _send({
       type: MESSAGE_TYPES.MOB_UPDATE,
       mob: s.mob,
     });

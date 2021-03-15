@@ -1,4 +1,4 @@
-import { MESSAGE_TYPES } from "../mobtime-sdk";
+import { MESSAGE_TYPES } from "../sdk";
 
 const setup = async ({ timer }) => {
   await timer.connect();
