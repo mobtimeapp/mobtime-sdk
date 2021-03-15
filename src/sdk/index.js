@@ -1,4 +1,5 @@
 import WebSocket from "ws";
+import { Later } from './later';
 
 const makeId = () =>
   Math.random()
@@ -13,27 +14,12 @@ const MESSAGE_TYPES = {
   SETTINGS_UPDATE: "settings:update",
 };
 
-const deferredPromise = () => {
-  let resolveFn = () => {};
-  let rejectFn = () => {};
-  const promise = new Promise((_resolve, _reject) => {
-    resolveFn = _resolve;
-    rejectFn = _reject;
-  });
-
-  return {
-    promise,
-    resolve: value => resolveFn(value),
-    reject: err => rejectFn(err),
-  };
-};
-
 function Mobtime(timerId, options = {}) {
   let _WebSocket = WebSocket;
   let _socket = null;
   let _isNewTimerHandle = null;
-  let _isNewTimer = deferredPromise();
-  let _socketConnect = deferredPromise();
+  let _isNewTimer = new Later();
+  let _socketConnect = new Later();
 
   let callbacks = {};
   let state = {};
@@ -166,15 +152,15 @@ function Mobtime(timerId, options = {}) {
   };
 
   const connect = () => {
-    _socketConnect = deferredPromise();
-    _isNewTimer = deferredPromise();
+    _socketConnect = new Later();
+    _isNewTimer = new Later();
 
     _socket = new _WebSocket(getUrl("ws"));
     _socket.on("open", _socketOnOpen);
     _socket.on("message", _socketOnMessage);
     _socket.on("error", _socketOnError);
 
-    return _socketConnect.promise;
+    return _socketConnect.promise();
   };
 
   const isNewTimer = () => _isNewTimer.promise;

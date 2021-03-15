@@ -1,6 +1,6 @@
 import test from "ava";
 
-import Mobtime, { MESSAGE_TYPES } from "./mobtime-sdk";
+import Mobtime, { MESSAGE_TYPES } from "./index";
 import { MockWebSocket } from "./testServer";
 
 test("it connects to a timer", t => {

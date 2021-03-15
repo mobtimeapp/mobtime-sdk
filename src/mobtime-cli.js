@@ -1,7 +1,7 @@
 import process from "process";
 import getopts from "getopts";
 
-import Mobtime from "./mobtime-sdk";
+import Mobtime from "./sdk/index";
 import * as Commands from "./commands";
 
 const args = getopts(process.argv.slice(2), {
