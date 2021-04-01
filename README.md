@@ -6,11 +6,12 @@ A commandline interface and SDK for [mobtime](https://mobti.me).
 
  - [ ] `mobtime [timer-id] init [options]` to create a timer
    - Options:
-     - `--mob="name"` to add names to mob, can be set multiple times
-     - `--goal="goal text"` to add goals, can be set multiple times
-     - `--setting="[key]:[value]"` to set a setting, can be set multiple times
-     - `--config="path to json file"` to load mob, goals, and settings from a file
+     - [x] `--mob="name"` to add names to mob, can be set multiple times
+     - [x] `--goal="goal text"` to add goals, can be set multiple times
+     - [ ] `--setting="[key]:[value]"` to set a setting, can be set multiple times
+     - [ ] `--config="path to json file"` to load mob, goals, and settings from a file
        - `{ mob: [], goals: [], settings: {} }`
+ - [x] `mobtime [timer-id] add-member [name of person]`
  - [ ] `mobtime [timer-id] start [options]` to start the timer
    - `--duration=[minutes]` to specify the number of minutes to run the timer for
  - [ ] `mobtime [timer-id] pause` to pause the timer

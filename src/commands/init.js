@@ -11,23 +11,26 @@ const run = async ({ args, timer }) => {
     return;
   }
 
-  const mob = [].concat(args.mob || []).map(name => ({
-    id: Math.random()
-      .toString(36)
-      .slice(2),
-    name
-  }));
-
-  if (mob.length > 0) {
-    timer.mobUpdate(mob);
-  }
-
   console.log("Timer is available");
 
   console.log(timer.getUrl("http"));
   console.log("Waiting for your connection before disconnecting...");
 
   await timer.waitForMessageType(MESSAGE_TYPES.TIMER_OWNERSHIP);
+
+  const promises = [];
+
+  const mob = [].concat(args.mob || []);
+  for (let name of mob) {
+    promises.push(timer.mobAdd(name));
+  }
+
+  const goals = [].concat(args.goal || []);
+  for (let text of goals) {
+    promises.push(timer.goalAdd(text));
+  }
+
+  await Promise.all(promises);
 };
 
 const teardown = async ({ timer }) => {

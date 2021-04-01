@@ -1,7 +1,8 @@
 import test from "ava";
+import sinon from "sinon";
 
 import Mobtime, { MESSAGE_TYPES } from "./index";
-import { MockWebSocket } from "./testServer";
+import { MockWebSocket } from "../testServer";
 
 test("it connects to a timer", t => {
   const timer = new Mobtime("wss://localhost/test");
@@ -49,6 +50,7 @@ test("it detects the timer is not new", async t => {
 });
 
 test.skip("it can insert a new member into an existing mob", async t => {
+  MockWebSocket.prototype.send.resetHistory();
   const timer = new Mobtime("wss://localhost/test");
   timer.testing.setWebSocketClass(MockWebSocket);
 
@@ -56,5 +58,7 @@ test.skip("it can insert a new member into an existing mob", async t => {
   timer.testing.onSocketOpen();
   await connectionPromise;
 
-  timer.addMember(name);
+  await timer.mobAdd('Bob');
+
+  t.truthy(MockWebSocket.prototype.send.called());
 });

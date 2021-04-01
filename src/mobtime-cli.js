@@ -12,14 +12,16 @@ const args = getopts(process.argv.slice(2), {
     domain: "mobti.me",
     secure: true,
     timerId: null,
-    mob: "",
-    goals: "",
+    //mob: "",
+    //goal: "",
     timerDuration: ""
   }
 });
 
 const timerId = args._[0];
 const commandName = args._[1];
+
+// mobtime-cli [timerId] [command] [options]
 
 const timer = new Mobtime(timerId, {
   domain: args.domain,

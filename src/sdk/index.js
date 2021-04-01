@@ -110,7 +110,7 @@ function Mobtime(timerId, options = {}) {
   };
 
   const _socketOnOpen = () => {
-    _socket.send(JSON.stringify({ type: MESSAGE_TYPES.CLIENT_NEW }));
+    _send(JSON.stringify({ type: MESSAGE_TYPES.CLIENT_NEW }));
     _asynchronouslyDetermineIfTimerIsNew();
     _socketConnect.resolve();
   };
@@ -164,7 +164,7 @@ function Mobtime(timerId, options = {}) {
     return _socketConnect.promise();
   };
 
-  const isNewTimer = () => _isNewTimer.promise;
+  const isNewTimer = () => _isNewTimer.promise();
 
   const disconnect = () => {
     if (_socket) {
@@ -195,6 +195,7 @@ function Mobtime(timerId, options = {}) {
 
   const _send = payload =>
     new Promise(resolve => {
+      console.log(payload);
       _socket.send(JSON.stringify(payload), {}, (...args) => resolve(args));
     });
 
@@ -247,6 +248,21 @@ function Mobtime(timerId, options = {}) {
     return mobSet(mob.filter(m => m.id !== id));
   };
 
+  const goalSet = goals => {
+    const s = _setState({ goals });
+    return _send({
+      type: MESSAGE_TYPES.GOALS_UPDATE,
+      goals: s.goals,
+    });
+  };
+
+  const goalAdd = text => {
+    const id = makeId();
+    const { goals } = state;
+    const goal = { id, text, completed: false };
+    return goalSet(goals.concat(goal)).then(() => goal);
+  };
+
   _init();
 
   return {
@@ -262,6 +278,8 @@ function Mobtime(timerId, options = {}) {
     mobRename,
     mobRemove,
     mobMoveIdToIndex,
+    goalSet,
+    goalAdd,
     testing: {
       setWebSocketClass: _setWebSocketClass,
       onSocketOpen: _socketOnOpen,
