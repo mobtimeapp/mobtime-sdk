@@ -7,8 +7,6 @@ const makeId = () =>
     .slice(2);
 
 const MESSAGE_TYPES = {
-  CLIENT_NEW: "client:new",
-  TIMER_OWNERSHIP: "timer:ownership",
   MOB_UPDATE: "mob:update",
   GOALS_UPDATE: "goals:update",
   SETTINGS_UPDATE: "settings:update",
@@ -30,7 +28,6 @@ function Mobtime(timerId, options = {}) {
       goals: [],
       mob: [],
       settings: { mobOrder: "Navigator,Driver", duration: 5 * 60 * 1000 },
-      isOwner: false,
     };
   };
 
@@ -287,15 +284,6 @@ function Mobtime(timerId, options = {}) {
       onSocketError: _socketOnError,
     },
   };
-
-  // mobUpdate(mob) {
-  // this.send({type : MESSAGE_TYPES.MOB_UPDATE, mob});
-  // this.state = {...this.state, mob};
-  //}
-
-  // mobAdd(name, id = Math.random().toString(36).slice(2)) {
-  // return this.mobUpdate([...this.state.mob, {name, id} ]);
-  //}
 }
 
 export default Mobtime;

@@ -6,6 +6,7 @@
   "author": "Alex Barry <alex.barry@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "example": "node -r esm src/example.js",
     "start": "node -r esm src/mobtime-cli.js",
     "test": "ava"
   },
@@ -16,6 +17,7 @@
     "sinon": "^9.0.3"
   },
   "dependencies": {
+    "composable-state": "^0.0.1",
     "esm": "^3.2.25",
     "getopts": "^2.2.5",
     "ws": "^7.3.1"
