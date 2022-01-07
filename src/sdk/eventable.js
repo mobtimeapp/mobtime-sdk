@@ -19,8 +19,8 @@ export class Eventable {
     this.listeners[type] = (this.listeners[type] || []).filter((cb) => cb !== callback);
   }
 
-  trigger(type, payload) {
-    (this.listeners[type] || []).map((cb) => cb(payload))
+  trigger(type, payload, parent) {
+    (this.listeners[type] || []).map((cb) => cb(payload, parent))
       .filter((afterFn) => typeof afterFn === 'function')
       .forEach((afterFn) => afterFn());
   }

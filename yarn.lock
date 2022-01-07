@@ -693,6 +693,11 @@ common-tags@^1.4.0, common-tags@^1.8.0:
   resolved "https://registry.yarnpkg.com/common-tags/-/common-tags-1.8.0.tgz#8e3153e542d4a39e9b10554434afaaf98956a937"
   integrity sha512-6P6g0uetGpW/sdyUy/iQQCbFF0kWVMSIVSyYz7Zgjcgh8mgw8PQzDNZeyZ5DQ2gM7LBoZPHmnjz8rUthkBG5tw==
 
+composable-state@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/composable-state/-/composable-state-0.0.1.tgz#c32ff5d096a4f6bbe4ecc128022781781beb672e"
+  integrity sha512-a0b2Dj+YHgi8ly32q0uNjBExJswfe+JsaZ6bfmwg9qLv0OWWn/w0J1sP26PHIY31sKYzkZwR1PVk00VzAnMY2Q==
+
 concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
