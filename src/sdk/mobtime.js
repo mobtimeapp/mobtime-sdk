@@ -19,6 +19,7 @@ export class Mobtime {
     this.message = null;
     this._onMessage = this._onMessage.bind(this);
     this.state = { ...INITIAL_STATE };
+    this.recentIds = Array.from({ length: 10 }, () => null);
   }
 
   testSetMakeSocketFunction(makeSocket) {
@@ -175,19 +176,24 @@ export class Mobtime {
       ? this.message.chain(JSON.parse(data))
       : new Message(JSON.parse(data))
 
+    const oldState = JSON.parse(JSON.stringify(this.state));
+
     Message.caseOf({
       [Message.TYPES.MOB_UPDATE]: ({ mob }) => this._mutateState('mob', mob),
       [Message.TYPES.GOALS_UPDATE]: ({ goals }) => this._mutateState('goals', goals),
       [Message.TYPES.SETTINGS_UPDATE]: ({ settings }) => this._mutateState('settings', settings),
       [Message.TYPES.TIMER_START]: ({ timerDuration }) => this._mutateState('timer', { duration: timerDuration, startedAt: Date.now() }),
+      [Message.TYPES.TIMER_UPDATE]: ({ timerStartedAt, timerDuration }) => this._mutateState('timer', { duration: timerDuration - (Date.now() - timerStartedAt), startedAt: timerStartedAt }),
       [Message.TYPES.TIMER_PAUSE]: ({ timerDuration }) => this._mutateState('timer', { duration: timerDuration, startedAt: null }),
-      [Message.TYPES.TIMER_COMPLETE]: ({ timerDuration }) => this._mutateState('timer', { duration: this.state.settings.duration, startedAt: null }),
+      [Message.TYPES.TIMER_COMPLETE]: () => this._mutateState('timer', { duration: 0, startedAt: null }),
     }, this.message);
 
     const eventName = (name) => local ? `${name}.local` : name;
 
-    this.events.trigger(eventName('*'), this.message, this);
-    this.events.trigger(eventName(this.message.type), this.message, this);
+    if (this.recentIds.includes(this.message.id)) return;
+
+    this.events.trigger(eventName('*'), this.message, this, oldState);
+    this.events.trigger(eventName(this.message.type), this.message, this, oldState);
   }
 
   _onDisconnect() {
@@ -211,6 +217,9 @@ export class Mobtime {
   }
 
   send(message) {
+    const { id } = JSON.parse(message);
+    this.recentIds.unshift(id);
+    this.recentIds.pop();
     return this.socket.send(message);
   }
 
@@ -244,3 +253,8 @@ export class Mobtime {
   }
 }
 
+Mobtime.connect = (timerId, options) => {
+  return (new Mobtime(timerId, options))
+    .connect()
+    .then(timer => timer.ready())
+};
