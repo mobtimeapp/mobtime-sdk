@@ -1,4 +1,5 @@
 import { Mobtime } from './sdk/mobtime.js';
+import { WebSocket } from './sdk/socket.node.js';
 import { Message } from './sdk/message.js';
 
 const millisecondsToMMSS = (totalMilliseconds) => {
@@ -21,30 +22,31 @@ const domain = domainFlag
   : 'mobti.me';
 
 
-Mobtime.connect(timerId, {
-  secure: true,
-  domain,
-})
+(new Mobtime)
+  .usingSocket(new WebSocket(timerId, {
+    secure: true,
+    domain,
+  }))
   .then((timer) => {
-    timer.events.on(Message.TYPES.MOB_UPDATE, () => {
-      console.log('Mobbers: ', timer.getState().mob.map(m => m.name).join(', '));
+    timer.events.on(Message.MOB_UPDATE, () => {
+      console.log('Mobbers: ', timer.mob().items().map(m => m.name).join(', '));
     });
-    timer.events.on(Message.TYPES.GOALS_UPDATE, () => {
+    timer.events.on(Message.GOALS_UPDATE, () => {
       console.log('Goals:');
-      timer.getState().goals.forEach((g) => {
+      timer.goals().items().forEach((g) => {
         console.log(` [${g.completed ? 'X' : ' '}] ${g.text}`);
       });
     });
-    timer.events.on(Message.TYPES.SETTINGS_UPDATE, () => {
+    timer.events.on(Message.SETTINGS_UPDATE, () => {
       console.log('Settings: ', JSON.stringify(timer.getState().settings));
     });
-    timer.events.on(Message.TYPES.TIMER_START, () => {
+    timer.events.on(Message.TIMER_START, () => {
       console.log('Timer Started: ', millisecondsToMMSS(timer.getState().timer.duration));
     });
-    timer.events.on(Message.TYPES.TIMER_UPDATE, () => {
+    timer.events.on(Message.TIMER_UPDATE, () => {
       console.log('Timer Already Going: ', millisecondsToMMSS(timer.getState().timer.duration));
     });
-    timer.events.on(Message.TYPES.TIMER_PAUSE, () => {
+    timer.events.on(Message.TIMER_PAUSE, () => {
       console.log('Timer Paused: ', millisecondsToMMSS(timer.getState().timer.duration));
     });
     console.log('timer connected');

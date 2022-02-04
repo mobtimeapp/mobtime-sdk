@@ -1,7 +1,7 @@
 import test from "ava";
 import sinon from "sinon";
 
-import Mobtime, { MESSAGE_TYPES } from "./index";
+import { Mobtime, Message } from "./index";
 import { MockWebSocket } from "../testServer";
 
 test("it connects to a timer", t => {
@@ -38,7 +38,7 @@ test("it detects the timer is not new", async t => {
 
   timer.testing.onSocketMessage(
     JSON.stringify({
-      type: MESSAGE_TYPES.TIMER_OWNERSHIP,
+      type: Message.TIMER_OWNERSHIP,
       isOwner: false,
     }),
   );

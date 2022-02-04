@@ -1,46 +1,38 @@
-import WebSocket from 'ws';
-
-const makeWebsocketUri = (timerId, { secure, domain }) => {
-  return [
-    secure ? 'wss://' : 'ws://',
-    domain || 'mobti.me',
-    '/',
-    timerId,
-  ].join('');
-};
-
 export class Socket {
-  static connect(timerId, { secure, domain }) {
-    return new Promise((resolve, reject) => {
-      const websocket = new WebSocket(makeWebsocketUri(timerId, { secure, domain }));
-      websocket.on('error', reject);
-      websocket.on('open', () => {
-        websocket.off('error', reject);
-        resolve(new Socket(websocket));
-      });
-    });
+  constructor(timerId, options) {
+    const secure = (options && options.secure) || true;
+    const domain = (options && options.domain) || 'mobti.me';
+    this.uri = [
+      secure ? 'wss://' : 'ws://',
+      domain || 'mobti.me',
+      '/',
+      timerId,
+    ].join('');
   }
 
-  constructor(websocket) {
-    this.websocket = websocket;
+  get socket() {
+    return this._websocket;
+  }
+
+  set socket(_value) {}
+
+  connect() {
+    return Promise.reject(new Error('Socket.connect not implemented'));
   }
 
   disconnect() {
-    this.websocket.close();
-    this.websocket = null;
+    throw new Error('Socket.disconnect not implemented');
   }
 
-  send(data) {
-    return new Promise((resolve) => {
-      this.websocket.send(data, {}, resolve);
-    });
+  send(_data) {
+    return Promise.reject(new Error('Socket.send not implemented'));
   }
 
-  on(event, callback) {
-    return this.websocket.on(event, callback);
+  on(_event, _callback) {
+    throw new Error('Socket.on not implemented');
   }
 
-  off(event, callback) {
-    return this.websocket.off(event, callback);
+  off(_event, _callback) {
+    throw new Error('Socket.off not implemented');
   }
 }
