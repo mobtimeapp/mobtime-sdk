@@ -1,6 +1,6 @@
 export class Message {
   constructor({ id, type, ...payload }, previousMessage) {
-    this.id = id;
+    this.id = id || Message.id();
     this.type = type;
     this.payload = payload;
     this.previousMessage = previousMessage;

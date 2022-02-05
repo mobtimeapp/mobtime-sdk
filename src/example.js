@@ -11,7 +11,7 @@ const millisecondsToMMSS = (totalMilliseconds) => {
 
 const timerFlag = process.argv.find(a => a.startsWith('--timer='));
 if (!timerFlag) {
-  console.error('must specify timer id with --timer=<timerid>');
+  console.error('must specify mobtime id with --timer=<timerid>');
   process.exit(0);
 }
 const timerId = timerFlag.split('=')[1];
@@ -31,64 +31,64 @@ const logGroup = (title, logs) => {
 };
 
 
-(new Mobtime)
+(new Mobtime())
   .usingSocket(new Socket(timerId, {
     secure,
     domain,
   }))
-  .then((timer) => {
+  .then((mobtime) => {
     let tickHandle = null;
 
-    timer.events.on(Message.MOB_UPDATE, () => {
+    mobtime.events.on(Message.MOB_UPDATE, () => {
       logGroup('Mob', [
-        ['new', timer.mob().newItems()],
-        ['changed', timer.mob().changedItems()],
-        ['removed', timer.mob().removedItems()],
-        ['list', timer.mob().items().map(m => m.name)],
+        ['new', mobtime.mob().newItems()],
+        ['changed', mobtime.mob().changedItems()],
+        ['removed', mobtime.mob().removedItems()],
+        ['list', mobtime.mob().items().map(m => m.name)],
       ]);
     });
 
-    timer.events.on(Message.GOALS_UPDATE, () => {
+    mobtime.events.on(Message.GOALS_UPDATE, () => {
       logGroup('Goals', [
-        ['new', timer.goals().newItems()],
-        ['changed', timer.goals().changedItems()],
-        ['removed', timer.goals().removedItems()],
-        ['list', timer.goals().items().map(g => `[${g.completed ? 'x' : ' '}] ${g.text}`)],
+        ['new', mobtime.goals().newItems()],
+        ['changed', mobtime.goals().changedItems()],
+        ['removed', mobtime.goals().removedItems()],
+        ['list', mobtime.goals().items().map(g => `[${g.completed ? 'x' : ' '}] ${g.text}`)],
       ]);
     });
 
-    timer.events.on(Message.SETTINGS_UPDATE, () => {
+    mobtime.events.on(Message.SETTINGS_UPDATE, () => {
       logGroup('Settings', [
-        ['changed', timer.settings().changedItems()],
-        ['all', timer.settings().items()],
+        ['changed', mobtime.settings().changedItems()],
+        ['all', mobtime.settings().items()],
       ]);
     });
 
     const timerTick = () => {
-      const total = timer.timer().remainingMilliseconds();
+      const total = mobtime.timer().remainingMilliseconds();
       console.log(`Timer: ${millisecondsToMMSS(total)}`);
 
       if (total <= 0) {
-        timer.timer().complete().commit();
+        mobtime.timer().complete().commit();
       }
     };
 
-    timer.events.on(Message.TIMER_START, () => {
-      console.log('Timer Started: ', millisecondsToMMSS(timer.timer().items().duration));
+    mobtime.events.on(Message.TIMER_START, () => {
+      console.log('Timer Started: ', millisecondsToMMSS(mobtime.timer().items().duration));
       clearInterval(tickHandle);
       tickHandle = setInterval(timerTick, 250);
     });
 
-    timer.events.on(Message.TIMER_UPDATE, () => {
+    mobtime.events.on(Message.TIMER_UPDATE, () => {
     });
 
-    timer.events.on(Message.TIMER_PAUSE, () => {
+    mobtime.events.on(Message.TIMER_PAUSE, () => {
       clearInterval(tickHandle);
       timerTick();
       console.log('timer:paused')
     });
 
-    timer.events.on(Message.TIMER_COMPLETE, () => {
+    mobtime.events.on(Message.TIMER_COMPLETE, () => {
       clearInterval(tickHandle);
       timerTick();
       console.log('timer:completed')
@@ -96,7 +96,7 @@ const logGroup = (title, logs) => {
 
     console.log('timer connected');
 
-    timer.timer().start().commit();
+    mobtime.timer().start().commit();
   })
   .catch((err) => {
     console.error(err);
