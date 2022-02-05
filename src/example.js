@@ -1,5 +1,5 @@
 import { Mobtime } from './sdk/mobtime.js';
-import { WebSocket } from './sdk/socket.node.js';
+import { Socket } from './sdk/socket.node.js';
 import { Message } from './sdk/message.js';
 
 const millisecondsToMMSS = (totalMilliseconds) => {
@@ -21,36 +21,84 @@ const domain = domainFlag
   ? domainFlag.split('=')[1]
   : 'mobti.me';
 
+const secure = !Boolean(process.argv.find(a => a === '--insecure'))
+
+const logGroup = (title, logs) => {
+  console.log(`== ${title} ===============`);
+  console.log();
+  logs.forEach((data) => console.log(...([].concat(data))));
+  console.log();
+};
+
 
 (new Mobtime)
-  .usingSocket(new WebSocket(timerId, {
-    secure: true,
+  .usingSocket(new Socket(timerId, {
+    secure,
     domain,
   }))
   .then((timer) => {
+    let tickHandle = null;
+
     timer.events.on(Message.MOB_UPDATE, () => {
-      console.log('Mobbers: ', timer.mob().items().map(m => m.name).join(', '));
+      logGroup('Mob', [
+        ['new', timer.mob().newItems()],
+        ['changed', timer.mob().changedItems()],
+        ['removed', timer.mob().removedItems()],
+        ['list', timer.mob().items().map(m => m.name)],
+      ]);
     });
+
     timer.events.on(Message.GOALS_UPDATE, () => {
-      console.log('Goals:');
-      timer.goals().items().forEach((g) => {
-        console.log(` [${g.completed ? 'X' : ' '}] ${g.text}`);
-      });
+      logGroup('Goals', [
+        ['new', timer.goals().newItems()],
+        ['changed', timer.goals().changedItems()],
+        ['removed', timer.goals().removedItems()],
+        ['list', timer.goals().items().map(g => `[${g.completed ? 'x' : ' '}] ${g.text}`)],
+      ]);
     });
+
     timer.events.on(Message.SETTINGS_UPDATE, () => {
-      console.log('Settings: ', JSON.stringify(timer.getState().settings));
+      logGroup('Settings', [
+        ['changed', timer.settings().changedItems()],
+        ['all', timer.settings().items()],
+      ]);
     });
+
+    const timerTick = () => {
+      const total = timer.timer().remainingMilliseconds();
+      console.log(`Timer: ${millisecondsToMMSS(total)}`);
+
+      if (total <= 0) {
+        timer.timer().complete().commit();
+      }
+    };
+
     timer.events.on(Message.TIMER_START, () => {
       console.log('Timer Started: ', millisecondsToMMSS(timer.getState().timer.duration));
+      clearInterval(tickHandle);
+      tickHandle = setInterval(timerTick, 250);
     });
+
     timer.events.on(Message.TIMER_UPDATE, () => {
-      console.log('Timer Already Going: ', millisecondsToMMSS(timer.getState().timer.duration));
     });
+
     timer.events.on(Message.TIMER_PAUSE, () => {
-      console.log('Timer Paused: ', millisecondsToMMSS(timer.getState().timer.duration));
+      clearInterval(tickHandle);
+      timerTick();
+      console.log('timer:paused')
     });
+
+    timer.events.on(Message.TIMER_COMPLETE, () => {
+      clearInterval(tickHandle);
+      timerTick();
+      console.log('timer:completed')
+    });
+
     console.log('timer connected');
+
+    timer.timer().start().commit();
   })
-  .catch(() => {
+  .catch((err) => {
+    console.error(err);
     process.exit(-1);
   });

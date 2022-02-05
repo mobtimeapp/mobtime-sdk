@@ -1,4 +1,4 @@
-import BaseSocket from './socket.js';
+import { Socket as BaseSocket } from './socket.js';
 
 export class Socket extends BaseSocket {
   constructor(timerId, options) {

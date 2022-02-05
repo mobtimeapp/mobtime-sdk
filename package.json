@@ -8,7 +8,7 @@
   "author": "Alex Barry <alex.barry@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "example": "node -r esm src/example.js",
+    "example": "node src/example.js",
     "test": "ava"
   },
   "devDependencies": {

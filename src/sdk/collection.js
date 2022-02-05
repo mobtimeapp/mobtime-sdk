@@ -1,16 +1,23 @@
-export class Collection {
-  constructor(values, previousValues, detectChangeFn) {
+import { Commitable } from './commitable.js';
+
+
+export class Collection extends Commitable {
+  constructor(mobtime, values, previousValues, makeMessageFn) {
+    super(mobtime, makeMessageFn);
+
     this._values = values;
-    this.compareAgainst(previousValues, detectChangeFn);
+    this.compareAgainst(previousValues);
   }
 
-  compareAgainst(previousValues, detectChangeFn) {
-    this.newIds = values.reduce(
+  compareAgainst(previousValues) {
+    const detectChangeFn = (a, b) => JSON.stringify(a) !== JSON.stringify(b);
+
+    this.newIds = this._values.reduce(
       ((memo, value) => previousValues.find(pv => pv.id === value.id) ? memo : [...memo, value.id]),
       [],
     );
 
-    this.changedIds = values.reduce(
+    this.changedIds = this._values.reduce(
       ((memo, value) => previousValues.find(pv => pv.id === value.id && detectChangeFn(pv, value))
         ? [...memo, value.id]
         : memo
@@ -18,7 +25,7 @@ export class Collection {
       [],
     );
 
-    this._removedValues = previousValues.filter((pv) => !values.find(v => v.id === pv.id));
+    this._removedValues = previousValues.filter((pv) => !this._values.find(v => v.id === pv.id));
   }
 
   items() {
@@ -26,11 +33,11 @@ export class Collection {
   }
 
   newItems() {
-    return this.newIds.map((id) => this._values[id]);
+    return this._values.filter(v => this.newIds.includes(v.id));
   }
 
   changedItems() {
-    return this.changedIds.map((id) => this._values[id]);
+    return this._values.filter(v => this.changedIds.includes(v.id));
   }
 
   removedItems() {
@@ -38,7 +45,7 @@ export class Collection {
   }
 
   _makeIsItem(identifier) {
-    return Number.isNumber(identifier)
+    return typeof identifier === 'number'
       ? ((_value, index) => index === identifier)
       : (typeof identifier === 'function'
         ? identifier
@@ -47,8 +54,7 @@ export class Collection {
   }
 
   findIndex(identifier) {
-
-    return this._values.findIndex(isItem);
+    return this._values.findIndex(this._makeIsItem(identifier));
   }
 
   find(identifier) {

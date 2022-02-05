@@ -1,6 +1,6 @@
 export class Socket {
   constructor(timerId, options) {
-    const secure = (options && options.secure) || true;
+    const secure = (options && 'secure' in options) ? options.secure : true;
     const domain = (options && options.domain) || 'mobti.me';
     this.uri = [
       secure ? 'wss://' : 'ws://',

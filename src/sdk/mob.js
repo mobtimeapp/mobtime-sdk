@@ -1,19 +1,14 @@
 import { Collection } from './collection.js';
+import { Message } from './message.js';
 
 export class Mob extends Collection {
   constructor(mobtime, values, previousValues) {
     super(
+      mobtime,
       values,
       previousValues,
-      ((a, b) => a.name !== b.name),
+      Message.mobUpdate,
     );
-    this.mobtime = mobtime;
-  }
-
-  commit() {
-    const msg = Message.mobUpdate(this.items())
-    this.mobtime._onMessage(msg, { local: true });
-    this.mobtime.send(msg);
   }
 
   rotate() {
@@ -44,10 +39,10 @@ export class Mob extends Collection {
     );
   }
 
-  add(name) {
+  add(name, id) {
     return new Mob(
       this.mobtime,
-      this.items().concat({ id: Math.random().toString(36).slice(2), name }),
+      this.items().concat({ id: id || Math.random().toString(36).slice(2), name }),
       this.items(),
     );
   }

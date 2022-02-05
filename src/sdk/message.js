@@ -17,6 +17,14 @@ export class Message {
   }
 }
 
+Message.MOB_UPDATE = "mob:update";
+Message.GOALS_UPDATE = "goals:update";
+Message.SETTINGS_UPDATE = "settings:update";
+Message.TIMER_START = 'timer:start';
+Message.TIMER_UPDATE = 'timer:update';
+Message.TIMER_PAUSE = 'timer:pause';
+Message.TIMER_COMPLETE = 'timer:complete';
+
 Message.id = () => Math.random().toString(36).slice(2);
 
 Message.mobUpdate = (mob) => JSON.stringify({
@@ -37,9 +45,17 @@ Message.settingsUpdate = (settings) => JSON.stringify({
   settings
 });
 
-Message.timerStart = (timerDuration) => JSON.stringify({
+Message.timerUpdate = (timerDuration, now) => JSON.stringify({
+  id: Message.id(),
+  type: Message.TIMER_UPDATE,
+  timerStartedAt: now || Date.now(),
+  timerDuration,
+});
+
+Message.timerStart = (timerDuration, now) => JSON.stringify({
   id: Message.id(),
   type: Message.TIMER_START,
+  timerStartedAt: now || Date.now(),
   timerDuration,
 });
 
@@ -53,14 +69,6 @@ Message.timerComplete = () => JSON.stringify({
   id: Message.id(),
   type: Message.TIMER_COMPLETE,
 });
-
-Message.MOB_UPDATE = "mob:update";
-Message.GOALS_UPDATE = "goals:update";
-Message.SETTINGS_UPDATE = "settings:update";
-Message.TIMER_START = 'timer:start';
-Message.TIMER_UPDATE = 'timer:update';
-Message.TIMER_PAUSE = 'timer:pause';
-Message.TIMER_COMPLETE = 'timer:complete';
 
 Message.caseOf = (typeFn, message) => {
   const fn = typeFn[message.type] || typeFn._;

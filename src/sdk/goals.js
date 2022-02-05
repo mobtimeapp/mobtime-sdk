@@ -1,19 +1,14 @@
 import { Collection } from './collection.js';
+import { Message } from './message.js';
 
 export class Goals extends Collection {
   constructor(mobtime, values, previousValues) {
     super(
+      mobtime,
       values,
       previousValues,
-      ((a, b) => a.name !== b.name),
+      Message.goalsUpdate,
     );
-    this.mobtime = mobtime;
-  }
-
-  commit() {
-    const msg = Message.mobGoals(this.items())
-    this.mobtime._onMessage(msg, { local: true });
-    this.mobtime.send(msg);
   }
 
   change(identifier, changeFn) {
@@ -24,10 +19,10 @@ export class Goals extends Collection {
     );
   }
 
-  add(text) {
+  add(text, id) {
     return new Goals(
       this.mobtime,
-      this.items().concat({ id: Math.random().toString(36).slice(2), text, completed: false }),
+      this.items().concat({ id: id || Math.random().toString(36).slice(2), text, completed: false }),
       this.items(),
     );
   }

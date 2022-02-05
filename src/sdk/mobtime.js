@@ -1,8 +1,11 @@
+import { composable, select, replace } from 'composable-state';
+
 import { Eventable } from './eventable.js';
 import { Message } from './message.js';
-import { composable, select, replace } from 'composable-state';
-import { Mob } from './mob';
-import { Goals } from './goals';
+import { Mob } from './mob.js';
+import { Goals } from './goals.js';
+import { Settings } from './settings.js';
+import { Timer } from './timer.js';
 
 export const INITIAL_STATE = {
   timer: { startedAt: null, duration: 5 * 60 * 1000 },
@@ -24,13 +27,14 @@ export class Mobtime {
   usingSocket(socket) {
     return socket.connect().then(() => {
       this.socket = socket;
-      return this;
+      this.socket.on('message', this._onMessage);
+      return this.ready();
     });
   }
 
   _mutateState(key, value) {
     this.prevState = this.state;
-    this.state = composable(select(key, replace(value)));
+    this.state = composable(this.state, select(key, replace(value)));
   }
 
   getState() {
@@ -42,47 +46,23 @@ export class Mobtime {
   }
 
   goals() {
-    return new Goals(this, this.state.goals. this.prevState.goals);
+    return new Goals(this, this.state.goals, this.prevState.goals);
   }
 
-  settingsUpdate(settings) {
-    const msg = Message.settingsUpdate(settings);
-    this._onMessage(msg, { local: true });
-    this.send(msg);
-    return true;
+  settings() {
+    return new Settings(this, this.state.settings, this.prevState.settings);
   }
 
-  timerStart(duration) {
-    let timerDuration = duration || this.state.settings.duration;
-    const msg = Message.timerStart(timerDuration);
-    this._onMessage(msg, { local: true });
-    this.send(msg);
-    return true;
+  timer() {
+    return new Timer(this, this.state.timer, this.prevState.timer);
   }
 
-  timerPause() {
-    if (!this.state.timer.startedAt) return false;
-
-    const timerDuration = Math.max(0, this.state.timer.duration - (Date.now() - this.state.timerStartedAt));
-    const msg = Message.timerStart(timerDuration);
-    this._onMessage(msg, { local: true });
-    this.send(msg);
-    return true;
-  }
-
-  timerComplete() {
-    const msg = Message.timerComplete();
-    this._onMessage(msg, { local: true });
-    this.send(msg);
-    return true;
-  }
-
-  _onMessage(data, { local }) {
+  _onMessage(data, options) {
     this.message = this.message
       ? this.message.chain(JSON.parse(data))
       : new Message(JSON.parse(data))
 
-    const oldState = JSON.parse(JSON.stringify(this.state));
+    const oldState = this.state;
 
     Message.caseOf({
       [Message.MOB_UPDATE]: ({ mob }) => this._mutateState('mob', mob),
@@ -94,7 +74,7 @@ export class Mobtime {
       [Message.TIMER_COMPLETE]: () => this._mutateState('timer', { duration: 0, startedAt: null }),
     }, this.message);
 
-    const eventName = (name) => local ? `${name}.local` : name;
+    const eventName = (name) => name; // (options && options.local) ? `${name}.local` : name;
 
     if (this.recentIds.includes(this.message.id)) return;
 
@@ -142,6 +122,10 @@ export class Mobtime {
 
   waitForMessageType(type) {
     return new Promise((resolve) => {
+      const msg = this.findMessageWhere((message) => message.type === type);
+      if (msg) {
+        return resolve(msg);
+      }
       const cancel = this.events.on(type, (message) => {
         cancel();
         resolve(message);
@@ -158,9 +142,3 @@ export class Mobtime {
       .then(() => this);
   }
 }
-
-Mobtime.connect = (timerId, options) => {
-  return (new Mobtime(timerId, options))
-    .connect()
-    .then(timer => timer.ready())
-};
