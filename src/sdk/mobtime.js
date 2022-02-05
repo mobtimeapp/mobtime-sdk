@@ -32,13 +32,9 @@ export class Mobtime {
     });
   }
 
-  _mutateState(key, value) {
+  _updateState(key, value) {
     this.prevState = this.state;
     this.state = composable(this.state, select(key, replace(value)));
-  }
-
-  getState() {
-    return JSON.parse(JSON.stringify(this.state));
   }
 
   mob() {
@@ -65,21 +61,19 @@ export class Mobtime {
     const oldState = this.state;
 
     Message.caseOf({
-      [Message.MOB_UPDATE]: ({ mob }) => this._mutateState('mob', mob),
-      [Message.GOALS_UPDATE]: ({ goals }) => this._mutateState('goals', goals),
-      [Message.SETTINGS_UPDATE]: ({ settings }) => this._mutateState('settings', settings),
-      [Message.TIMER_START]: ({ timerDuration }) => this._mutateState('timer', { duration: timerDuration, startedAt: Date.now() }),
-      [Message.TIMER_UPDATE]: ({ timerStartedAt, timerDuration }) => this._mutateState('timer', { duration: timerDuration - (Date.now() - timerStartedAt), startedAt: timerStartedAt }),
-      [Message.TIMER_PAUSE]: ({ timerDuration }) => this._mutateState('timer', { duration: timerDuration, startedAt: null }),
-      [Message.TIMER_COMPLETE]: () => this._mutateState('timer', { duration: 0, startedAt: null }),
+      [Message.MOB_UPDATE]: ({ mob }) => this._updateState('mob', mob),
+      [Message.GOALS_UPDATE]: ({ goals }) => this._updateState('goals', goals),
+      [Message.SETTINGS_UPDATE]: ({ settings }) => this._updateState('settings', settings),
+      [Message.TIMER_START]: ({ timerDuration }) => this._updateState('timer', { duration: timerDuration, startedAt: Date.now() }),
+      [Message.TIMER_UPDATE]: ({ timerStartedAt, timerDuration }) => this._updateState('timer', { duration: timerDuration - (Date.now() - timerStartedAt), startedAt: timerStartedAt }),
+      [Message.TIMER_PAUSE]: ({ timerDuration }) => this._updateState('timer', { duration: timerDuration, startedAt: null }),
+      [Message.TIMER_COMPLETE]: () => this._updateState('timer', { duration: 0, startedAt: null }),
     }, this.message);
-
-    const eventName = (name) => name; // (options && options.local) ? `${name}.local` : name;
 
     if (this.recentIds.includes(this.message.id)) return;
 
     this.events.trigger(eventName('*'), this.message, this, oldState);
-    this.events.trigger(eventName(this.message.type), this.message, this, oldState);
+    this.events.trigger(this.message.type, this.message, this, oldState, options && options.local);
   }
 
   _onDisconnect() {

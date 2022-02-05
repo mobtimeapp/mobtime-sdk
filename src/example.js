@@ -74,7 +74,7 @@ const logGroup = (title, logs) => {
     };
 
     timer.events.on(Message.TIMER_START, () => {
-      console.log('Timer Started: ', millisecondsToMMSS(timer.getState().timer.duration));
+      console.log('Timer Started: ', millisecondsToMMSS(timer.timer().items().duration));
       clearInterval(tickHandle);
       tickHandle = setInterval(timerTick, 250);
     });
