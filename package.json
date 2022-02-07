@@ -9,18 +9,18 @@
   "license": "MIT",
   "scripts": {
     "example": "node src/example.js",
-    "test": "ava"
+    "test": "ava",
+    "lint": "eslint src/**/*.js"
   },
   "devDependencies": {
     "ava": "^3.12.1",
     "eslint": "^7.8.1",
-    "prettier-eslint-cli": "^5.0.0",
+    "prettier-eslint-cli": "^4.2.1",
     "sinon": "^9.0.3"
   },
   "dependencies": {
     "composable-state": "^0.0.2",
     "esm": "^3.2.25",
-    "getopts": "^2.2.5",
     "ws": "^7.3.1"
   },
   "ava": {

@@ -1,23 +1,14 @@
-import { Collection } from './collection.js';
-import { Message } from './message.js';
+import { Collection } from "./collection.js";
+import { Message } from "./message.js";
 
 export class Mob extends Collection {
   constructor(mobtime, values, previousValues) {
-    super(
-      mobtime,
-      values,
-      previousValues,
-      Message.mobUpdate,
-    );
+    super(mobtime, values, previousValues, Message.mobUpdate);
   }
 
   rotate() {
     const [first, ...trailing] = this.items();
-    return new Mob(
-      this.mobtime,
-      [...trailing, first],
-      this.items(),
-    );
+    return new Mob(this.mobtime, [...trailing, first], this.items());
   }
 
   randomize() {
@@ -40,30 +31,31 @@ export class Mob extends Collection {
   }
 
   add(name, id) {
-    return new Mob(
-      this.mobtime,
-      this.items().concat({ id: id || Math.random().toString(36).slice(2), name }),
-      this.items(),
-    );
+    return this.exists({ id })
+      ? this.change({ id }, m => ({ ...m, name }))
+      : new Mob(
+          this.mobtime,
+          this.items().concat({
+            id:
+              id ||
+              Math.random()
+                .toString(36)
+                .slice(2),
+            name,
+          }),
+          this.items(),
+        );
   }
 
   rename(identifier, text) {
-    return this.change(identifier, ((goal) => ({ ...goal, text })));
+    return this.change(identifier, goal => ({ ...goal, text }));
   }
 
   remove(identifier) {
-    return new Mob(
-      this.mobtime,
-      super.remove(identifier),
-      this.items(),
-    );
+    return new Mob(this.mobtime, super.remove(identifier), this.items());
   }
 
   move(identifier, index) {
-    return new Mob(
-      this.mobtime,
-      super.move(identifier, index),
-      this.items(),
-    );
+    return new Mob(this.mobtime, super.move(identifier, index), this.items());
   }
 }

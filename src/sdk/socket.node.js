@@ -4,8 +4,6 @@ import { Socket as BaseSocket } from './socket.js';
 export class Socket extends BaseSocket {
   constructor(timerId, options) {
     super(timerId, options);
-
-    this.messageBuffer = [];
   }
 
   connect() {

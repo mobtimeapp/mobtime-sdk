@@ -6,6 +6,14 @@ export class Message {
     this.previousMessage = previousMessage;
   }
 
+  json() {
+    return {
+      id: this.id,
+      type: this.type,
+      payload: this.payload,
+    };
+  }
+
   detachHistory() {
     const prev = this.prevoiusMessage;
     this.previousMessage = null;
@@ -20,58 +28,68 @@ export class Message {
 Message.MOB_UPDATE = "mob:update";
 Message.GOALS_UPDATE = "goals:update";
 Message.SETTINGS_UPDATE = "settings:update";
-Message.TIMER_START = 'timer:start';
-Message.TIMER_UPDATE = 'timer:update';
-Message.TIMER_PAUSE = 'timer:pause';
-Message.TIMER_COMPLETE = 'timer:complete';
+Message.TIMER_START = "timer:start";
+Message.TIMER_UPDATE = "timer:update";
+Message.TIMER_PAUSE = "timer:pause";
+Message.TIMER_COMPLETE = "timer:complete";
 
-Message.id = () => Math.random().toString(36).slice(2);
+Message.id = () =>
+  Math.random()
+    .toString(36)
+    .slice(2);
 
-Message.mobUpdate = (mob) => JSON.stringify({
-  id: Message.id(),
-  type: Message.MOB_UPDATE,
-  mob,
-});
+Message.mobUpdate = mob =>
+  JSON.stringify({
+    id: Message.id(),
+    type: Message.MOB_UPDATE,
+    mob,
+  });
 
-Message.goalsUpdate = (goals) => JSON.stringify({
-  id: Message.id(),
-  type: Message.GOALS_UPDATE,
-  goals,
-});
+Message.goalsUpdate = goals =>
+  JSON.stringify({
+    id: Message.id(),
+    type: Message.GOALS_UPDATE,
+    goals,
+  });
 
-Message.settingsUpdate = (settings) => JSON.stringify({
-  id: Message.id(),
-  type: Message.SETTINGS_UPDATE,
-  settings
-});
+Message.settingsUpdate = settings =>
+  JSON.stringify({
+    id: Message.id(),
+    type: Message.SETTINGS_UPDATE,
+    settings,
+  });
 
-Message.timerUpdate = (timerDuration, now) => JSON.stringify({
-  id: Message.id(),
-  type: Message.TIMER_UPDATE,
-  timerStartedAt: now || Date.now(),
-  timerDuration,
-});
+Message.timerUpdate = (timerDuration, now) =>
+  JSON.stringify({
+    id: Message.id(),
+    type: Message.TIMER_UPDATE,
+    timerStartedAt: now || Date.now(),
+    timerDuration,
+  });
 
-Message.timerStart = (timerDuration, now) => JSON.stringify({
-  id: Message.id(),
-  type: Message.TIMER_START,
-  timerStartedAt: now || Date.now(),
-  timerDuration,
-});
+Message.timerStart = (timerDuration, now) =>
+  JSON.stringify({
+    id: Message.id(),
+    type: Message.TIMER_START,
+    timerStartedAt: now || Date.now(),
+    timerDuration,
+  });
 
-Message.timerPause = (timerDuration) => JSON.stringify({
-  id: Message.id(),
-  type: Message.TIMER_PAUSE,
-  timerDuration,
-});
+Message.timerPause = timerDuration =>
+  JSON.stringify({
+    id: Message.id(),
+    type: Message.TIMER_PAUSE,
+    timerDuration,
+  });
 
-Message.timerComplete = () => JSON.stringify({
-  id: Message.id(),
-  type: Message.TIMER_COMPLETE,
-});
+Message.timerComplete = () =>
+  JSON.stringify({
+    id: Message.id(),
+    type: Message.TIMER_COMPLETE,
+  });
 
 Message.caseOf = (typeFn, message) => {
   const fn = typeFn[message.type] || typeFn._;
   if (!fn) return null;
   return fn(message.payload, message);
-}
+};
