@@ -151,7 +151,7 @@ Luckily, you can make a custom test socket.
 import { Mobtime, Message } from "@mobtime/sdk";
 import { Socket } from "@mobtime/sdk/support/socket.js";
 
-new Mobtime().withSocket(Socket.use()).then(mobtime => {
+new Mobtime().usingSocket(Socket.use()).then(mobtime => {
   const { socket } = mobtime; // Get your test socket
 
   // do your testing...
