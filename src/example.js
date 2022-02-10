@@ -70,9 +70,15 @@ const example = mobtime => {
     ]);
   });
 
+  let lastTime = "";
   const timerTick = () => {
+    if (!mobtime.timer().isRunning()) return;
+
     const total = mobtime.timer().remainingMilliseconds();
-    console.log(`Timer: ${millisecondsToMMSS(total)}`);
+    const time = millisecondsToMMSS(total);
+    if (time === lastTime) return;
+    console.log(`Timer: ${time}`);
+    lastTime = time;
 
     if (total <= 0) {
       mobtime
@@ -87,15 +93,11 @@ const example = mobtime => {
       "Timer Started: ",
       millisecondsToMMSS(mobtime.timer().items().duration),
     );
-    clearInterval(tickHandle);
-    tickHandle = setInterval(timerTick, 250);
   });
 
   mobtime.on(Message.TIMER_UPDATE, () => {});
 
   mobtime.on(Message.TIMER_PAUSE, () => {
-    clearInterval(tickHandle);
-    timerTick();
     console.log("timer:paused");
   });
 
@@ -105,12 +107,9 @@ const example = mobtime => {
     console.log("timer:completed");
   });
 
-  console.log("timer connected");
+  tickHandle = setInterval(timerTick, 250);
 
-  mobtime
-    .timer()
-    .start()
-    .commit();
+  console.log("timer connected");
 };
 
 new Mobtime()

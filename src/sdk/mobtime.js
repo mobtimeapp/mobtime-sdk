@@ -26,6 +26,11 @@ export class Mobtime extends Eventable {
     this.recentIds = Array.from({ length: 10 }, () => null);
   }
 
+  setState(state) {
+    this.prevState = this.state;
+    this.state = state;
+  }
+
   /**
    * Tell mobtime how to connect the websocket
    *
@@ -43,8 +48,7 @@ export class Mobtime extends Eventable {
   }
 
   _updateState(key, value) {
-    this.prevState = this.state;
-    this.state = composable(this.state, select(key, replace(value)));
+    this.setState(composable(this.state, select(key, replace(value))));
   }
 
   /**
@@ -86,6 +90,7 @@ export class Mobtime extends Eventable {
   _onMessage(data, options) {
     const json = JSON.parse(data);
     const source = (options && options.source) || "server";
+    const now = Date.now();
 
     this.message = this.message ? this.message.chain(json) : new Message(json);
 
@@ -96,15 +101,15 @@ export class Mobtime extends Eventable {
           this._updateState("goals", goals),
         [Message.SETTINGS_UPDATE]: ({ settings }) =>
           this._updateState("settings", settings),
-        [Message.TIMER_START]: ({ timerDuration }) =>
+        [Message.TIMER_START]: ({ timerDuration, startedAt }) =>
           this._updateState("timer", {
             duration: timerDuration,
-            startedAt: Date.now(),
+            startedAt: startedAt || now,
           }),
         [Message.TIMER_UPDATE]: ({ timerStartedAt, timerDuration }) =>
           this._updateState("timer", {
-            duration: timerDuration - (Date.now() - timerStartedAt),
-            startedAt: timerStartedAt,
+            duration: timerDuration,
+            startedAt: timerStartedAt || now,
           }),
         [Message.TIMER_PAUSE]: ({ timerDuration }) =>
           this._updateState("timer", {

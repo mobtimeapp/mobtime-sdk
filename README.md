@@ -4,6 +4,8 @@ A mobtime NodeJS/browser SDK
 
 ## Example
 
+(You can also check out [example.js](./src/example.js) for some "tested" code)
+
 ```javascript
 import { Mobtime, Message, nodeWebsocket } from "@mobtime/sdk";
 

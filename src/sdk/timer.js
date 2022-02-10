@@ -1,5 +1,5 @@
-import { Message } from './message.js';
-import { composable, select, replace } from 'composable-state';
+import { Message } from "./message.js";
+import { composable, select, replace } from "composable-state";
 
 export class Timer {
   constructor(mobtime, values, previousValues, msg) {
@@ -28,35 +28,48 @@ export class Timer {
   }
 
   remainingMilliseconds() {
-    if (!this._values.startedAt && this._values.duration > 0) return this._values.duration;
-    if (!this._values.startedAt) return this.mobtime.settings().items().duration;
-    if (this._values.duration < 1) return 0;
+    if (!this._values.startedAt && this._values.duration > 0)
+      return this._values.duration;
+    if (!this._values.startedAt)
+      return this.mobtime.settings().items().duration;
 
-    const diff = Date.now() - this._values.startedAt;
+    const now = Date.now();
+    const diff = now - this._values.startedAt;
     const remaining = this._values.duration - diff;
-    return remaining > 0
-      ? remaining
-      : this.mobtime.settings().items().duration;
+    //console.log("remainingMilliseconds", {
+    //  now,
+    //  startedAt: this._values.startedAt,
+    //  diff,
+    //  duration: this._values.duration,
+    //  remaining,
+    //  state: this.mobtime.state,
+    //});
+    return Math.max(0, remaining); // remaining > 0 ? remaining : this.mobtime.settings().items().duration;
   }
 
   isRunning() {
-    return this.remainingMilliseconds > 0;
+    return this.remainingMilliseconds() > 0;
   }
 
   start(durationOverride) {
-    const duration = durationOverride || this.mobtime.settings().items().duration;
+    const duration =
+      durationOverride || this.mobtime.settings().items().duration;
     const now = Date.now();
 
-    return this
-      .change('duration', duration)
-      .change('startedAt', now, Message.timerStart(duration, now))
+    return this.change("duration", duration).change(
+      "startedAt",
+      now,
+      Message.timerStart(duration, now),
+    );
   }
 
   pause() {
     const duration = this.remainingMilliseconds();
-    return this
-      .change('duration', duration)
-      .change('startedAt', null, Message.timerPause(duration));
+    return this.change("duration", duration).change(
+      "startedAt",
+      null,
+      Message.timerPause(duration),
+    );
   }
 
   resume() {
@@ -66,8 +79,10 @@ export class Timer {
   }
 
   complete() {
-    return this
-      .change('duration', null)
-      .change('startedAt', null, Message.timerComplete());
+    return this.change("duration", null).change(
+      "startedAt",
+      null,
+      Message.timerComplete(),
+    );
   }
 }
