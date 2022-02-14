@@ -80,6 +80,7 @@ export class Collection extends Commitable {
   }
 
   move(identifier, index) {
+    const isItem = this._makeIsItem(identifier);
     const sourceIndex = this.findIndex(identifier);
     const value = this._values[sourceIndex];
     const before = this._values
@@ -96,9 +97,5 @@ export class Collection extends Commitable {
     const isItem = this._makeIsItem(identifier);
 
     return this._values.filter((item, index) => !isItem(item, index));
-  }
-
-  commit(_mobtime) {
-    return Promise.reject(new Error("Collection.commit not implemented"));
   }
 }

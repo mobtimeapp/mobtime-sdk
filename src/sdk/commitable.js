@@ -14,10 +14,21 @@ export class Commitable {
   }
 
   /**
+   * Detect if any changes have occured
+   *
+   * @returns {Boolean}
+   */
+  hasChanges() {
+    return true;
+  }
+
+  /**
    *
    *
    */
   commit() {
+    if (!this.hasChanges()) return;
+
     const msg = this.makeMessageFn(this.items());
     this.mobtime._onMessage(msg, { source: "local" });
     this.mobtime.send(msg);

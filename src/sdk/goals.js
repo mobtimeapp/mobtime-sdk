@@ -1,14 +1,9 @@
-import { Collection } from './collection.js';
-import { Message } from './message.js';
+import { Collection } from "./collection.js";
+import { Message } from "./message.js";
 
 export class Goals extends Collection {
   constructor(mobtime, values, previousValues) {
-    super(
-      mobtime,
-      values,
-      previousValues,
-      Message.goalsUpdate,
-    );
+    super(mobtime, values, previousValues, Message.goalsUpdate);
   }
 
   change(identifier, changeFn) {
@@ -22,33 +17,33 @@ export class Goals extends Collection {
   add(text, id) {
     return new Goals(
       this.mobtime,
-      this.items().concat({ id: id || Math.random().toString(36).slice(2), text, completed: false }),
+      this.items().concat({
+        id:
+          id ||
+          Math.random()
+            .toString(36)
+            .slice(2),
+        text,
+        completed: false,
+      }),
       this.items(),
     );
   }
 
   rename(identifier, text) {
-    return this.change(identifier, ((goal) => ({ ...goal, text })));
+    return this.change(identifier, goal => ({ ...goal, text }));
   }
 
   remove(identifier) {
-    return new Goals(
-      this.mobtime,
-      super.remove(identifier),
-      this.items(),
-    );
+    return new Goals(this.mobtime, super.remove(identifier), this.items());
   }
 
   move(identifier, index) {
-    return new Goals(
-      this.mobtime,
-      super.move(identifier, index),
-      this.items(),
-    );
+    return new Goals(this.mobtime, super.move(identifier, index), this.items());
   }
 
   complete(identifier, completed) {
-    return this.change(identifier, ((goal) => ({ ...goal, completed })));
+    return this.change(identifier, goal => ({ ...goal, completed }));
   }
 
   prune() {
@@ -57,5 +52,11 @@ export class Goals extends Collection {
       this.items().filter(g => !g.completed),
       this.items(),
     );
+  }
+
+  hasChanges() {
+    const live = JSON.stringify(this.mobtime.goals().items());
+    const current = JSON.stringify(this.items());
+    return live !== current;
   }
 }

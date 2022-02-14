@@ -58,4 +58,10 @@ export class Mob extends Collection {
   move(identifier, index) {
     return new Mob(this.mobtime, super.move(identifier, index), this.items());
   }
+
+  hasChanges() {
+    const live = JSON.stringify(this.mobtime.mob().items());
+    const current = JSON.stringify(this.items());
+    return live !== current;
+  }
 }
