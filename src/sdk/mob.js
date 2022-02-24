@@ -22,6 +22,10 @@ export class Mob extends Collection {
     );
   }
 
+  replaceAll(mob) {
+    return new Mob(this.mobtime, mob, this.items());
+  }
+
   change(identifier, changeFn) {
     return new Mob(
       this.mobtime,

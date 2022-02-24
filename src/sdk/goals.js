@@ -6,6 +6,10 @@ export class Goals extends Collection {
     super(mobtime, values, previousValues, Message.goalsUpdate);
   }
 
+  replaceAll(goals) {
+    return new Goals(this.mobtime, goals, this.items());
+  }
+
   change(identifier, changeFn) {
     return new Goals(
       this.mobtime,
