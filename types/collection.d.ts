@@ -9,7 +9,8 @@ export class Collection extends Commitable {
     newItems(): any;
     changedItems(): any;
     removedItems(): any[];
-    _makeIsItem(identifier: any): any;
+    /** @private */
+    private _makeIsItem;
     findIndex(identifier: any): any;
     find(identifier: any): any;
     exists(identifier: any): boolean;

@@ -12,40 +12,18 @@ export namespace INITIAL_STATE {
     }
 }
 export class Mobtime extends Eventable {
-    message: any;
-    /**
-     * @private
-     * @param {*} data
-     * @param {*} options
-     * @returns {void}
-     */
+    /** @private */
+    private message;
+    /** @private */
     private _onMessage;
-    state: {
-        timer: {
-            startedAt: any;
-            duration: number;
-        };
-        goals: any[];
-        mob: any[];
-        settings: {
-            mobOrder: string;
-            duration: number;
-        };
-    };
-    prevState: {
-        timer: {
-            startedAt: any;
-            duration: number;
-        };
-        goals: any[];
-        mob: any[];
-        settings: {
-            mobOrder: string;
-            duration: number;
-        };
-    };
-    recentIds: any;
+    /** @private */
+    private _state;
+    /** @private */
+    private prevState;
+    /** @private */
+    private recentIds;
     setState(state: any): void;
+    get state(): any;
     /**
      * Tell mobtime how to connect the websocket
      *
@@ -54,7 +32,10 @@ export class Mobtime extends Eventable {
      */
     usingSocket(socketPromise: PromiseLike<Socket>): PromiseLike<Mobtime>;
     socket: Socket;
-    _updateState(key: any, value: any): void;
+    /**
+     * @private
+     */
+    private _updateState;
     /**
      * Get mob data
      *
@@ -79,12 +60,16 @@ export class Mobtime extends Eventable {
      * @return {Timer}
      */
     timer(): Timer;
-    _onDisconnect(): void;
-    _onConnect(): void;
+    /** @private */
+    private _onDisconnect;
+    /** @private */
+    private _onConnect;
     /**
      * Disconnect websocket
+     *
+     * @return {void}
      */
-    disconnect(): Mobtime;
+    disconnect(): void;
     /**
      * Send a message to mobtime server
      * @param {string} message
