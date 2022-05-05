@@ -87,6 +87,12 @@ export class Mobtime extends Eventable {
     return new Timer(this, this.state.timer, this.prevState.timer);
   }
 
+  /**
+   * @private
+   * @param {*} data 
+   * @param {*} options 
+   * @returns {void}
+   */
   _onMessage(data, options) {
     const json = JSON.parse(data);
     const source = (options && options.source) || "server";
