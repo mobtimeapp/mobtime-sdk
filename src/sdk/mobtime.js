@@ -19,16 +19,25 @@ export class Mobtime extends Eventable {
   constructor() {
     super();
 
+    /** @private */
     this.message = null;
+    /** @private */
     this._onMessage = this._onMessage.bind(this);
-    this.state = { ...INITIAL_STATE };
+    /** @private */
+    this._state = { ...INITIAL_STATE };
+    /** @private */
     this.prevState = this.state;
+    /** @private */
     this.recentIds = Array.from({ length: 10 }, () => null);
   }
 
   setState(state) {
-    this.prevState = this.state;
-    this.state = state;
+    this.prevState = this._state;
+    this._state = state;
+  }
+
+  get state() {
+    return JSON.parse(JSON.stringify(this._state));
   }
 
   /**
@@ -47,7 +56,10 @@ export class Mobtime extends Eventable {
     return this.ready();
   }
 
-  _updateState(key, value) {
+  /**
+   * @private
+   */
+   _updateState(key, value) {
     this.setState(composable(this.state, select(key, replace(value))));
   }
 
@@ -87,12 +99,7 @@ export class Mobtime extends Eventable {
     return new Timer(this, this.state.timer, this.prevState.timer);
   }
 
-  /**
-   * @private
-   * @param {*} data 
-   * @param {*} options 
-   * @returns {void}
-   */
+  /** @private */
   _onMessage(data, options) {
     const json = JSON.parse(data);
     const source = (options && options.source) || "server";
@@ -136,16 +143,20 @@ export class Mobtime extends Eventable {
     this.trigger(this.message.type, this.message, this, { source });
   }
 
+  /** @private */
   _onDisconnect() {
     this.socket.off("message", this._onMessage);
   }
 
+  /** @private */
   _onConnect() {
     this.socket.on("message", this._onMessage);
   }
 
   /**
    * Disconnect websocket
+   * 
+   * @return {void}
    */
   disconnect() {
     this.socket.close();

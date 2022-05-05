@@ -50,6 +50,7 @@ export class Collection extends Commitable {
     return [...this._removedValues];
   }
 
+  /** @private */
   _makeIsItem(identifier) {
     return typeof identifier === "number"
       ? (_value, index) => index === identifier
