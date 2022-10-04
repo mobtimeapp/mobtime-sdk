@@ -25,9 +25,9 @@ const onGoalsUpdate = (message, mobtime) => {
   const toString = g => `[${g.completed ? "X" : " "}] ${g.text}`;
 
   console.log("goals updated", {
-    changed: mob.changedItems().map(toString),
-    removed: mob.removedItems().map(toString),
-    all: mob.items().map(toString),
+    changed: goals.changedItems().map(toString),
+    removed: goals.removedItems().map(toString),
+    all: goals.items().map(toString),
   });
 };
 
