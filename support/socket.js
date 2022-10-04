@@ -1,10 +1,18 @@
-import { BaseSocket, Message } from "../src/sdk/index.js";
+import { Message } from "../src/sdk/message.js";
+import { Socket as BaseSocket } from "../src/sdk/socket.js";
 import { Eventable } from "../src/sdk/eventable.js";
+import sinon from "sinon";
 
 export class Socket extends BaseSocket {
   constructor(timerId, options) {
     super(timerId, options);
     this.sendInitialPayloads = this.sendInitialPayloads.bind(this);
+
+    this.connect = sinon.fake(this.connect.bind(this));
+    this.disconnect = sinon.fake(this.disconnect.bind(this));
+    this.send = sinon.fake(this.send.bind(this));
+    this.on = sinon.fake(this.on.bind(this));
+    this.off = sinon.fake(this.off.bind(this));
   }
 
   connect() {
@@ -46,4 +54,26 @@ export class Socket extends BaseSocket {
   }
 }
 
-Socket.use = (timerId = "") => Promise.resolve(new Socket(timerId));
+export const withTestSocket = mobtime => {
+  const sendJson = json => mobtime._onMessage(json);
+  const close = () => mobtime.trigger("close");
+  const error = () => mobtime.trigger("error");
+
+  const init = () => {
+    sendJson(Message.mobUpdate([]));
+    sendJson(Message.goalsUpdate([]));
+    sendJson(
+      Message.settingsUpdate({
+        duration: 5 * 60 * 1000,
+        mobOrder: "driver,navigator",
+      }),
+    );
+  };
+
+  return {
+    init,
+    sendJson,
+    close,
+    error,
+  };
+};
