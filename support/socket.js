@@ -58,11 +58,17 @@ export const withTestSocket = mobtime => {
   const sendJson = json => mobtime._onMessage(json);
   const close = () => mobtime.trigger("close");
   const error = () => mobtime.trigger("error");
+  const socket = {
+    connect: sinon.fake(),
+    close: sinon.fake(),
+    send: sinon.fake(sendJson),
+  };
 
   const init = () => {
-    sendJson(Message.mobUpdate([]));
-    sendJson(Message.goalsUpdate([]));
-    sendJson(
+    mobtime.trigger("message", Message.mobUpdate([]));
+    mobtime.trigger("message", Message.goalsUpdate([]));
+    mobtime.trigger(
+      "message",
       Message.settingsUpdate({
         duration: 5 * 60 * 1000,
         mobOrder: "driver,navigator",
@@ -70,10 +76,12 @@ export const withTestSocket = mobtime => {
     );
   };
 
+  mobtime.socket = socket;
+
   return {
     init,
-    sendJson,
     close,
     error,
+    socket,
   };
 };

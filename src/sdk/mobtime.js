@@ -2,11 +2,11 @@ import { composable, select, replace } from "composable-state";
 
 import { Eventable } from "./eventable.js";
 import { Message } from "./message.js";
-import { Socket } from "./socket.js";
 import { Mob } from "./mob.js";
 import { Goals } from "./goals.js";
 import { Settings } from "./settings.js";
 import { Timer } from "./timer.js";
+import { Socket } from "./socket.js"; // eslint-disable-line no-unused-vars
 
 export const INITIAL_STATE = {
   timer: { startedAt: null, duration: 5 * 60 * 1000 },
@@ -29,6 +29,8 @@ export class Mobtime extends Eventable {
     this.prevState = this.state;
     /** @private */
     this.recentIds = Array.from({ length: 10 }, () => null);
+
+    this.on("message", this._onMessage);
   }
 
   setState(state) {
@@ -50,7 +52,7 @@ export class Mobtime extends Eventable {
     const socket = await socketPromise;
     await socket.connect();
     this.socket = socket;
-    this.socket.on("message", this._onMessage);
+    this.socket.on("message", message => this.trigger("message", message));
     this.socket.on("close", () => this.trigger("close"));
     this.socket.on("error", () => this.trigger("error"));
     return this.ready();
@@ -59,7 +61,7 @@ export class Mobtime extends Eventable {
   /**
    * @private
    */
-   _updateState(key, value) {
+  _updateState(key, value) {
     this.setState(composable(this.state, select(key, replace(value))));
   }
 
@@ -144,18 +146,18 @@ export class Mobtime extends Eventable {
   }
 
   /** @private */
-  _onDisconnect() {
-    this.socket.off("message", this._onMessage);
-  }
+  // _onDisconnect() {
+  //   this.socket.off("message", this._onMessage);
+  // }
 
   /** @private */
-  _onConnect() {
-    this.socket.on("message", this._onMessage);
-  }
+  // _onConnect() {
+  //   this.socket.on("message", this._onMessage);
+  // }
 
   /**
    * Disconnect websocket
-   * 
+   *
    * @return {void}
    */
   disconnect() {
@@ -176,15 +178,22 @@ export class Mobtime extends Eventable {
     return this.socket.send(message);
   }
 
-  findMessageWhere(findCb) {
-    let message = this.message;
-    while (message) {
-      if (findCb(message)) {
-        return message;
-      }
-      message = message.previousMessage;
+  /**
+   * Find a message using a callback
+   * @param {function} callback
+   * @return {PromiseLike<Message|null>}
+   */
+  findMessageWhere(findCb, initialMessage = null) {
+    const message = initialMessage || this.message;
+    if (!message) return Promise.reject("Unable to find message");
+
+    if (!findCb(message)) {
+      return new Promise(resolve =>
+        resolve(this.findMessageWhere(findCb, message.previousMessage)),
+      );
     }
-    return null;
+
+    return Promise.resolve(message);
   }
 
   /**
@@ -193,16 +202,27 @@ export class Mobtime extends Eventable {
    * @param {string} type
    * @return {PromiseLike<Message>} - the message that was hit
    */
-  async waitForMessageType(type) {
-    await new Promise(resolve => {
-      const msg = this.findMessageWhere(message => message.type === type);
-      if (msg) {
-        return resolve(msg);
-      }
+  waitForMessageType(type) {
+    return new Promise(resolve => {
+      let isResolved = false;
+      const resolveMessage = message => {
+        if (isResolved) return;
+        isResolved = true;
+        resolve(message);
+      };
+
       const cancel = this.on(type, message => {
         cancel();
-        resolve(message);
+        resolveMessage(message);
       });
+
+      this.findMessageWhere(message => message.type === type)
+        .then(resolveMessage)
+        .catch(e => {
+          if (e !== "Unable to find message") {
+            throw e;
+          }
+        });
     });
   }
 
