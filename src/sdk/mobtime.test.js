@@ -1,31 +1,62 @@
 import test from "ava";
-import sinon from "sinon";
 
 import { Mobtime } from "./mobtime.js";
+import { Mob } from "./mob.js";
+import { Goals } from "./goals.js";
+import { Settings } from "./settings.js";
+import { Timer } from "./timer.js";
+import { Message } from "./message.js";
 import { withTestSocket } from "../../support/socket.js";
 
-test("creates socket, and is chainable, and can be destructed", async t => {
+test("creates instance, and is chainable, and can be destructed", async t => {
   const client = new Mobtime();
-  const socket = withTestSocket(client);
-  socket.init();
+  const { init, socket } = withTestSocket(client);
+  init();
   const instance = await client.ready();
 
   t.is(client, instance);
-  t.truthy(
-    makeTestSocket.calledWithExactly("test-timer", {}),
-    "make socket function called",
-  );
 
-  await client.disconnect();
+  client.disconnect();
+  t.truthy(socket.close.called);
   t.is(client.socket, null);
 });
 
-test("on connect, it sends the connection message", async t => {
-  const { client, socketRig } = createTestMobtime("test-timer");
-  await client.connect();
+test("can return a mob object", t => {
+  const client = new Mobtime();
 
-  t.truthy(
-    socketRig.send.calledWithExactly(JSON.stringify({ type: "client:new" })),
-    "sends connection message",
-  );
+  t.truthy(client.mob() instanceof Mob);
+});
+
+test("can return a goals object", t => {
+  const client = new Mobtime();
+
+  t.truthy(client.goals() instanceof Goals);
+});
+
+test("can return a settings object", t => {
+  const client = new Mobtime();
+
+  t.truthy(client.settings() instanceof Settings);
+});
+
+test("can return a timer object", t => {
+  const client = new Mobtime();
+
+  t.truthy(client.timer() instanceof Timer);
+});
+
+test("async find a message", async t => {
+  const messages = [
+    { type: "foo" },
+    { type: "bar" },
+    { type: "fizz" },
+    { type: "buzz" },
+  ];
+
+  const client = new Mobtime();
+  messages.forEach(m => client._onMessage(JSON.stringify(m)));
+
+  const message = await client.findMessageWhere(m => m.type === "bar");
+
+  t.is(messages[1].type, message.type);
 });

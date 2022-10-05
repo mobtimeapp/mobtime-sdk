@@ -1,5 +1,4 @@
 import test from "ava";
-import sinon from "sinon";
 
 import { Mobtime } from "./index.js";
 import { withTestSocket } from "../../support/socket.js";
