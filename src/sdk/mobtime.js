@@ -84,7 +84,7 @@ export class Mobtime extends Eventable {
   }
 
   /**
-   * Get goals data
+   * Get settings data
    *
    * @return {Settings}
    */
@@ -102,8 +102,10 @@ export class Mobtime extends Eventable {
   }
 
   /** @private */
-  _onMessage(data, options) {
-    const json = JSON.parse(data);
+  _onMessage(event, options) {
+    const json =
+      typeof event === "string" ? JSON.parse(event) : JSON.parse(event.data);
+
     const source = (options && options.source) || "server";
     const now = Date.now();
 
